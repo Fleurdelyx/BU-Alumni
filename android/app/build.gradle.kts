@@ -8,8 +8,8 @@ plugins {
 
 android {
     namespace = "com.baliuagu.alumni_tracer"
-    compileSdk = 34  // Updated to latest
-    ndkVersion = "23.1.7779620"
+    compileSdk = 36  // Updated to fix plugin compatibility
+    ndkVersion = "27.0.12077973"  // Updated to fix plugin compatibility
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -25,8 +25,8 @@ android {
         applicationId = "com.baliuagu.alumni_tracer"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 21  // Set explicit minimum for better compatibility
-        targetSdk = 34  // Updated to latest
+        minSdk = flutter.minSdkVersion  // Set explicit minimum for better compatibility
+        targetSdk = 36  // Updated to latest
         versionCode = 1
         versionName = "1.0.0"
         multiDexEnabled = true  // Enable multidex for large apps

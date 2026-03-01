@@ -17,7 +17,8 @@ final syncStatusProvider =
 });
 
 final connectionStatusProvider = StreamProvider<ConnectivityResult>((ref) {
-  return Connectivity().onConnectivityChanged;
+  return Connectivity().onConnectivityChanged.map((results) => 
+    results.isNotEmpty ? results.first : ConnectivityResult.none);
 });
 
 enum SyncState {
