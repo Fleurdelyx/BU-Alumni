@@ -1,0 +1,98 @@
+name: Upload APK to Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Release version (e.g., v1.0.9)'
+        required: true
+        default: 'v1.0.9'
+
+jobs:
+  upload-apk:
+    name: Upload Pre-built APK
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code (for APK files)
+      uses: actions/checkout@v4
+      
+    - name: Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+        cache: true
+
+    - name: Get dependencies
+      run: flutter pub get
+
+    - name: Build debug APK only
+      run: |
+        echo "🔨 Building debug APK only (faster)..."
+        flutter build apk --debug
+
+    - name: Build release APK 
+      run: |
+        echo "🚀 Building release APK..."
+        flutter build apk --release
+
+    - name: Verify APK files exist
+      run: |
+        echo "📱 Checking for APK files..."
+        ls -la build/app/outputs/flutter-apk/
+        
+        if [ -f "build/app/outputs/flutter-apk/app-debug.apk" ]; then
+          echo "✅ Debug APK found: $(du -h build/app/outputs/flutter-apk/app-debug.apk)"
+        fi
+        
+        if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+          echo "✅ Release APK found: $(du -h build/app/outputs/flutter-apk/app-release.apk)"
+        fi
+
+    - name: Create Release with APKs only
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ github.event.inputs.release_version }}
+        name: "BU Alumni Tracer APK ${{ github.event.inputs.release_version }}"
+        body: |
+          # 📱 BU Alumni Tracer APK Download
+          
+          ## Quick Download
+          **For Testing:** Download `app-debug.apk` below
+          **For Production:** Download `app-release.apk` below
+          
+          ## Installation
+          1. Download the APK file
+          2. Enable "Unknown Sources" in Android Settings → Security
+          3. Open the downloaded APK and tap "Install"
+          4. Launch "BU Alumni Tracer" from your app drawer
+          
+          ## Features
+          - 👥 Alumni directory and management
+          - 🔐 Firebase authentication and sync
+          - 📊 Interactive surveys and analytics
+          - 🎨 Dark/light theme support
+          - 🤖 AI chatbot assistant (BUddy)
+          - 📱 Offline capabilities
+          
+          ---
+          *APK ready to install on Android devices*
+        files: |
+          build/app/outputs/flutter-apk/app-debug.apk
+          build/app/outputs/flutter-apk/app-release.apk
+        draft: false
+        prerelease: false
+        generate_release_notes: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Success message
+      run: |
+        echo "✅ SUCCESS! APK files uploaded to release"
+        echo "📥 Download from: https://github.com/Fleurdelyx/BU-Alumni/releases/tag/${{ github.event.inputs.release_version }}"
