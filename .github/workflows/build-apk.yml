@@ -1,0 +1,124 @@
+name: Build and Release APK
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags like v1.0.0
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+
+    - name: Get dependencies
+      run: flutter pub get
+
+    - name: Build APK (Debug)
+      run: flutter build apk --debug
+      
+    - name: Build APK (Release)
+      run: flutter build apk --release
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: BU Alumni Tracer ${{ github.ref }}
+        body: |
+          ## 📱 Download APK
+          
+          **For Testing (Recommended):**
+          - Download `app-debug.apk` - includes debugging information
+          
+          **For Production:**
+          - Download `app-release.apk` - optimized version
+          
+          ## 🔧 Installation Instructions
+          1. Enable "Install from Unknown Sources" in your Android settings
+          2. Download the APK file
+          3. Open the downloaded file and install
+          
+          ## ✨ Features in this Release
+          - Alumni tracer study functionality
+          - Firebase authentication and data sync
+          - Dark/Light mode theme switching
+          - Interactive questionnaires
+          - Participant directory
+          - Statistics and analytics
+          - AI-powered chatbot (BUddy)
+        draft: false
+        prerelease: false
+
+    - name: Upload Debug APK
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: build/app/outputs/flutter-apk/app-debug.apk
+        asset_name: bu-alumni-tracer-debug.apk
+        asset_content_type: application/vnd.android.package-archive
+
+    - name: Upload Release APK
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: build/app/outputs/flutter-apk/app-release.apk
+        asset_name: bu-alumni-tracer-release.apk
+        asset_content_type: application/vnd.android.package-archive
+
+  # Build on pull requests for testing
+  test-build:
+    name: Test Build (PR)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.19.0'
+        channel: 'stable'
+
+    - name: Get dependencies
+      run: flutter pub get
+
+    - name: Analyze code
+      run: flutter analyze
+
+    - name: Run tests
+      run: flutter test
+
+    - name: Build APK
+      run: flutter build apk --debug
