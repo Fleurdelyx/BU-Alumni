@@ -2,6 +2,9 @@ name: Simple APK Build (Backup)
 
 on:
   workflow_dispatch:  # Manual trigger only
+  push:
+    tags:
+      - 'v*.*.*'  # Also trigger on version tags
 
 jobs:
   simple-build:
@@ -22,6 +25,7 @@ jobs:
     - name: Setup Flutter (Latest Stable)
       uses: subosito/flutter-action@v2
       with:
+        flutter-version: '3.41.2'  # Match your local version
         channel: 'stable'
         cache: true
 

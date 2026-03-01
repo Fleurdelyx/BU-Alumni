@@ -25,7 +25,7 @@ jobs:
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.19.0'
+        flutter-version: '3.41.2'  # Match your local version for compatibility
         channel: 'stable'
         cache: true
 
@@ -42,8 +42,12 @@ jobs:
           ls -la android/app/
         fi
 
-    - name: Flutter doctor
-      run: flutter doctor -v
+    - name: Flutter doctor and check
+      run: |
+        flutter doctor -v
+        flutter --version
+        echo "📦 Current Dart version and Flutter channel:"
+        dart --version
     
     - name: Clean and get dependencies with debug
       run: |
@@ -51,10 +55,7 @@ jobs:
         flutter clean
         echo "🔄 Updating dependencies..."
         flutter pub get --verbose
-        echo "📦 Installed dependencies:"
-        flutter pub deps --style=tree
-        echo "⚡ Running pub outdated check..."
-        flutter pub outdated || echo "Some packages have newer versions available"
+        echo "✅ Dependencies installed successfully"
         
     - name: Pre-build checks
       run: |
@@ -149,7 +150,7 @@ jobs:
     - name: Setup Flutter
       uses: subosito/flutter-action@v2
       with:
-        flutter-version: '3.19.0'
+        flutter-version: '3.41.2'  # Match your local version
         channel: 'stable'
 
     - name: Get dependencies

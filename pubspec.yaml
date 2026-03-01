@@ -17,13 +17,12 @@ dependencies:
   cloud_firestore: ^5.4.3
   firebase_storage: ^12.3.2
 
-  # State Management
+  # State Management - Using flutter_riverpod (includes base riverpod)
   provider: ^6.1.2
-  riverpod: ^2.6.1
+  flutter_riverpod: ^2.6.1
   riverpod_annotation: ^2.3.5
 
   # UI & Themes
-  flutter_riverpod: ^2.6.1
   shared_preferences: ^2.3.2
 
   # Charts & Graphs - Updated versions
