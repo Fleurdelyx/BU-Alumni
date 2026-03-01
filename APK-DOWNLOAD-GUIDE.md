@@ -13,18 +13,16 @@ git add .
 git commit -m "Initial commit: BU Alumni Tracer v1.0.0"
 ```
 
-### Step 2: Create GitHub Repository
-1. Go to [GitHub.com](https://github.com) and create new repository
-2. **Repository name**: `bu-alumni-tracer`
-3. **Description**: `Alumni tracer study app for Baliuag University`
-4. **Visibility**: Public ✅ (recommended for easy APK sharing)
-5. **DO NOT** add README, .gitignore, or LICENSE (already exist)
+### Step 2: Repository Already Created! 
+✅ **Your repository already exists**: https://github.com/Fleurdelyx/BU-Alumni  
+✅ **Public visibility**: Perfect for easy APK sharing  
+✅ **Ready to use**: No additional setup needed  
 
 ### Step 3: Connect and Push
 ```bash
 # Replace YOUR-USERNAME with your GitHub username
 git branch -M main
-git remote add origin https://github.com/YOUR-USERNAME/bu-alumni-tracer.git  
+git remote add origin https://github.com/Fleurdelyx/BU-Alumni.git  
 git push -u origin main
 ```
 
@@ -41,7 +39,7 @@ release.bat 1.0.0
 ## 📱 Download APKs
 
 ### Where to Find APKs
-- **URL**: `https://github.com/YOUR-USERNAME/bu-alumni-tracer/releases`
+- **URL**: `https://github.com/Fleurdelyx/BU-Alumni/releases`
 - **Build Time**: ~2-3 minutes after creating tag
 - **Files Available**:
   - `bu-alumni-tracer-debug.apk` ⭐ (recommended for testing)
@@ -107,7 +105,7 @@ git push origin v1.1.0
 ```
 🎓 BU Alumni Tracer App is ready for testing!
 
-📱 Download: https://github.com/YOUR-USERNAME/bu-alumni-tracer/releases
+📱 Download: https://github.com/Fleurdelyx/BU-Alumni/releases
 📋 Install: Download "bu-alumni-tracer-debug.apk" and enable "Unknown Sources"
 
 ✨ Features: Alumni tracking, surveys, statistics, AI chatbot, dark mode
@@ -141,4 +139,4 @@ git push origin v1.1.0
 ---
 
 💡 **Pro Tip**: Bookmark your releases page for quick APK access:
-`https://github.com/YOUR-USERNAME/bu-alumni-tracer/releases`
+`https://github.com/Fleurdelyx/BU-Alumni/releases`

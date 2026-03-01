@@ -50,7 +50,7 @@ echo ✅ Release v%VERSION% created successfully!
 echo.
 echo 🤖 GitHub Actions is now building your APKs...
 echo 📱 APKs will be available at: 
-echo    https://github.com/YOUR-USERNAME/bu-alumni-tracer/releases
+echo    https://github.com/Fleurdelyx/BU-Alumni/releases
 echo.
 echo ⏱️  Build typically takes 2-3 minutes
 echo 🔄 Refresh the releases page to see your new APKs

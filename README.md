@@ -5,7 +5,7 @@ A comprehensive graduate tracer study application for Baliuag University that tr
 ## 📱 Download APK for Testing
 
 ### Quick Download
-1. Go to the [Releases page](../../releases)
+1. Go to the [Releases page](https://github.com/Fleurdelyx/BU-Alumni/releases)
 2. Download the latest `bu-alumni-tracer-debug.apk` (recommended for testing) 
 3. Enable "Install from Unknown Sources" in your Android settings
 4. Install the downloaded APK
