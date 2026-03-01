@@ -104,7 +104,7 @@ lib/generated_plugin_registrant.dart
 
 # Firebase credentials
 firebase_options.dart
-google-services.json
+# google-services.json (removed from ignore - needed for GitHub Actions builds)
 GoogleService-Info.plist
 
 # Environment variables

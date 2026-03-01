@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "297562048023",
+    "project_id": "studio-8351558177-9c67c",
+    "storage_bucket": "studio-8351558177-9c67c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:297562048023:android:0edb22e5700c5fa08a7e52",
+        "android_client_info": {
+          "package_name": "com.baliuagu.alumni_tracer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFXii4qE8caXsxB91yNYzp-CM1Fpcwae0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

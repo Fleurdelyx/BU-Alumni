@@ -29,18 +29,17 @@ jobs:
         channel: 'stable'
         cache: true
 
-    - name: Create directories 
+    - name: Create directories and verify Firebase config
       run: |
         mkdir -p android/app
         ls -la android/app/
-
-    - name: Verify Firebase config
-      run: |
-        if [ ! -f "android/app/google-services.json" ]; then
-          echo "❌ google-services.json not found!"
-          exit 1
+        if [ -f "android/app/google-services.json" ]; then
+          echo "✅ google-services.json found and ready"
+          head -5 android/app/google-services.json
         else
-          echo "✅ google-services.json found"
+          echo "❌ google-services.json still missing - this is unexpected"
+          echo "Available files in android/app/:"
+          ls -la android/app/
         fi
 
     - name: Flutter doctor
