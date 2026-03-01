@@ -25,7 +25,7 @@ android {
         applicationId = "com.baliuagu.alumni_tracer"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion  // Set explicit minimum
+        minSdk = 21  // Set explicit minimum for better compatibility
         targetSdk = 34  // Updated to latest
         versionCode = 1
         versionName = "1.0.0"
