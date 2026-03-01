@@ -115,3 +115,7 @@ GoogleService-Info.plist
 # OS
 .DS_Store
 Thumbs.db
+
+# Local Git Installation
+git-portable/
+PortableGit.exe
