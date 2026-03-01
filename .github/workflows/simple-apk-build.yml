@@ -50,13 +50,23 @@ jobs:
         flutter clean
         echo "📦 Getting dependencies..."
         flutter pub get --verbose
+        echo "✅ Dependencies resolved successfully"
 
-    - name: Try building debug APK only (safer)
-      env:
-        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+    - name: Pre-build diagnostics
       run: |
-        echo "🔨 Building debug APK..."
-        flutter build apk --debug --verbose --no-shrink --dart-define=GOOGLE_API_KEY=$GOOGLE_API_KEY
+        echo "🔍 Android SDK verification..."
+        flutter doctor -v
+        echo "📱 Checking Android configuration..."
+        ls -la android/app/src/main/
+        echo "🔧 Checking build.gradle..."
+        cat android/app/build.gradle | head -20
+        echo "⚙️ Gradle wrapper permissions..."
+        chmod +x android/gradlew || echo "Gradlew already executable"
+
+    - name: Try minimal debug APK build
+      run: |
+        echo "🔨 Building debug APK with minimal flags..."
+        flutter build apk --debug --verbose
         
     - name: List output files  
       run: |
