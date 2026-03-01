@@ -46,21 +46,42 @@ jobs:
     - name: Flutter doctor
       run: flutter doctor -v
     
-    - name: Clean and get dependencies
+    - name: Clean and get dependencies with debug
       run: |
+        echo "🧹 Cleaning previous builds..."
         flutter clean
-        flutter pub get
-        flutter pub deps
+        echo "🔄 Updating dependencies..."
+        flutter pub get --verbose
+        echo "📦 Installed dependencies:"
+        flutter pub deps --style=tree
+        echo "⚡ Running pub outdated check..."
+        flutter pub outdated || echo "Some packages have newer versions available"
+        
+    - name: Pre-build checks
+      run: |
+        echo "🔧 Flutter doctor check..."
+        flutter doctor -v
+        echo "📱 Android SDK info..."
+        flutter config --android-sdk || echo "Android SDK path not set"
+        echo "🎯 Checking for deprecated embedding..."
+        grep -r "flutterEmbedding" android/ || echo "No embedding info found"
 
     - name: Build APK (Debug) with verbose output
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
       run: |
         echo "🔧 Building debug APK..."
-        flutter build apk --debug --verbose
+        echo "Using API key: ${GOOGLE_API_KEY:0:20}..." # Show first 20 chars only
+        flutter build apk --debug --verbose --dart-define=GOOGLE_API_KEY=$GOOGLE_API_KEY --no-tree-shake-icons
+        echo "✅ Debug APK build completed!"
         
     - name: Build APK (Release) with verbose output  
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
       run: |
         echo "🔧 Building release APK..."
-        flutter build apk --release --verbose
+        flutter build apk --release --verbose --dart-define=GOOGLE_API_KEY=$GOOGLE_API_KEY --no-tree-shake-icons --obfuscate --split-debug-info=build/app/outputs/symbols
+        echo "✅ Release APK build completed!"
 
     - name: List APK files
       run: |

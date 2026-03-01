@@ -8,8 +8,8 @@ plugins {
 
 android {
     namespace = "com.baliuagu.alumni_tracer"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 34  // Updated to latest
+    ndkVersion = "23.1.7779620"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -25,10 +25,11 @@ android {
         applicationId = "com.baliuagu.alumni_tracer"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        minSdk = 21  // Set explicit minimum
+        targetSdk = 34  // Updated to latest
+        versionCode = 1
+        versionName = "1.0.0"
+        multiDexEnabled = true  // Enable multidex for large apps
     }
 
     buildTypes {
@@ -41,8 +42,11 @@ android {
 }
 
 dependencies {
-    // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:34.9.0"))
+    // Import the Firebase BoM - Updated version
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1"))
+    
+    // Multidex support for large apps
+    implementation("androidx.multidex:multidex:2.0.1")
 
     // Add Firebase dependencies as needed (they'll use the BoM version):
     // implementation("com.google.firebase:firebase-auth")

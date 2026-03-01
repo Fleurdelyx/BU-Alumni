@@ -48,9 +48,11 @@ jobs:
         flutter pub get --verbose
 
     - name: Try building debug APK only (safer)
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
       run: |
         echo "🔨 Building debug APK..."
-        flutter build apk --debug --verbose --no-shrink
+        flutter build apk --debug --verbose --no-shrink --dart-define=GOOGLE_API_KEY=$GOOGLE_API_KEY
         
     - name: List output files  
       run: |

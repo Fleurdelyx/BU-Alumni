@@ -10,9 +10,13 @@ class ChatbotService {
   late ChatSession _chatSession;
 
   ChatbotService() {
-    // Initialize with your Google API Key
-    // Get it from https://aistudio.google.com/app/apikey
-    const apiKey = 'AIzaSyB8NmL2bXxa4mynaFgoNj0A-0qELtSwxE4';
+    // Load API key securely from environment or throw error
+    const apiKey = String.fromEnvironment('GOOGLE_API_KEY');
+
+    if (apiKey.isEmpty) {
+      throw Exception(
+          'GOOGLE_API_KEY not found! Please add it to your environment variables.');
+    }
 
     _model = GenerativeModel(
       model: 'gemini-pro',
