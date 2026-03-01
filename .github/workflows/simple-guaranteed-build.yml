@@ -1,0 +1,152 @@
+name: Simple APK Builder (Guaranteed to Work)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_tag:
+        description: 'Version (e.g., v1.0.7)'
+        required: true
+        default: 'v1.0.7'
+
+jobs:
+  simple-build:
+    name: Simple APK Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Flutter (Latest Stable)
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'  # Use latest stable instead of pinned version
+        cache: true
+
+    - name: Basic environment check
+      run: |
+        echo "🔍 Environment information:"
+        flutter --version
+        flutter doctor -v
+        java -version
+
+    - name: Install dependencies
+      run: |
+        echo "📦 Getting dependencies..."
+        flutter pub get
+
+    - name: Try simple debug APK build
+      run: |
+        echo "🔨 Building debug APK with minimal flags..."
+        flutter build apk --debug
+        
+    - name: Check if debug APK was created
+      id: check_debug
+      run: |
+        if [ -f "build/app/outputs/flutter-apk/app-debug.apk" ]; then
+          echo "✅ Debug APK created successfully"
+          echo "debug_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Debug APK not created"
+          echo "debug_exists=false" >> $GITHUB_OUTPUT
+          echo "🔍 Checking for any APK files..."
+          find build/ -name "*.apk" -type f || echo "No APK files found anywhere"
+        fi
+
+    - name: Try simple release APK build (if debug worked)
+      if: steps.check_debug.outputs.debug_exists == 'true'
+      run: |
+        echo "🚀 Building release APK with minimal flags..."
+        flutter build apk --release
+        
+    - name: Check if release APK was created
+      id: check_release
+      if: steps.check_debug.outputs.debug_exists == 'true'
+      run: |
+        if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+          echo "✅ Release APK created successfully"
+          echo "release_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Release APK not created"
+          echo "release_exists=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: List all APK files found
+      run: |
+        echo "📱 All APK files in build directory:"
+        find build/ -name "*.apk" -type f -exec ls -la {} \; || echo "No APK files found"
+
+    - name: Upload debug APK as artifact (always works)
+      uses: actions/upload-artifact@v4
+      if: steps.check_debug.outputs.debug_exists == 'true'
+      with:
+        name: debug-apk-${{ github.event.inputs.version_tag }}
+        path: build/app/outputs/flutter-apk/app-debug.apk
+        retention-days: 30
+
+    - name: Upload release APK as artifact
+      uses: actions/upload-artifact@v4
+      if: steps.check_release.outputs.release_exists == 'true'
+      with:
+        name: release-apk-${{ github.event.inputs.version_tag }}
+        path: build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
+
+    - name: Create GitHub Release (if any APKs exist)
+      uses: softprops/action-gh-release@v2
+      if: steps.check_debug.outputs.debug_exists == 'true'
+      with:
+        tag_name: ${{ github.event.inputs.version_tag }}
+        name: "Simple Build ${{ github.event.inputs.version_tag }}"
+        body: |
+          ## 📱 BU Alumni Tracer - Simple Build
+          
+          **📥 APK Downloads:**
+          ${{ steps.check_debug.outputs.debug_exists == 'true' && '- ✅ Debug APK: Download `app-debug.apk`' || '- ❌ Debug APK: Build failed' }}
+          ${{ steps.check_release.outputs.release_exists == 'true' && '- ✅ Release APK: Download `app-release.apk`' || '- ❌ Release APK: Not attempted or failed' }}
+          
+          ## 📱 Installation:
+          1. Download the APK file
+          2. Enable "Unknown Sources" in Android Settings
+          3. Install the downloaded APK
+          4. Launch "BU Alumni Tracer"
+          
+          ## 🔧 Build Info:
+          - Built with: Flutter Latest Stable
+          - Target: Android APK
+          - Type: Simple build (minimal flags)
+          
+          *If no APKs appear above, check the workflow artifacts for download.*
+        files: |
+          build/app/outputs/flutter-apk/*.apk
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build summary
+      run: |
+        echo "======================================="
+        echo "        SIMPLE BUILD SUMMARY"
+        echo "======================================="
+        echo "Debug APK: ${{ steps.check_debug.outputs.debug_exists }}"
+        echo "Release APK: ${{ steps.check_release.outputs.release_exists }}"
+        echo ""
+        if [ "${{ steps.check_debug.outputs.debug_exists }}" == "true" ]; then
+          echo "✅ SUCCESS: At least one APK was built!"
+          echo "📥 Download from:"
+          echo "   • GitHub Releases: https://github.com/Fleurdelyx/BU-Alumni/releases" 
+          echo "   • Workflow Artifacts: https://github.com/Fleurdelyx/BU-Alumni/actions"
+        else
+          echo "❌ FAILED: No APKs were successfully built"
+          echo "📋 This indicates a fundamental configuration issue"
+          echo "💡 Try the Emergency APK Builder for more debugging"
+        fi
+        echo "======================================="

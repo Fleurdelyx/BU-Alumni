@@ -37,6 +37,11 @@ jobs:
         flutter --version
         java -version
         flutter doctor --no-version-check
+        echo "🔧 Setting up Android build environment..."
+        # Accept Android licenses
+        yes | flutter doctor --android-licenses 2>/dev/null || echo "Android licenses handled"
+        # Check Android setup
+        flutter config --android-sdk
 
     - name: Clean and get dependencies
       run: |
@@ -44,14 +49,60 @@ jobs:
         flutter clean
         echo "📦 Installing dependencies..."
         flutter pub get
+        echo "🔍 Checking dependency tree..."
+        flutter pub deps --style=tree | head -15
 
-    - name: Build debug APK
+    - name: Build debug APK (with fallbacks)
       run: |
-        echo "🔨 Building debug APK..."
-        flutter build apk --debug --verbose
-        echo "📁 Checking build output directory structure..."
-        find build/ -type f -name "*.apk" || echo "No APK files found yet"
-        ls -la build/app/outputs/ || echo "No outputs directory"
+        echo "🔨 Building debug APK with multiple fallback methods..."
+        
+        # Method 1: Standard debug build
+        echo "🔨 Attempt 1: Standard debug build"
+        if flutter build apk --debug --verbose; then
+          echo "✅ Standard debug build succeeded"
+        else
+          echo "❌ Standard debug build failed, trying alternative approaches..."
+          
+          # Method 2: Clean and retry with no tree shaking
+          echo "🔨 Attempt 2: Build with minimal optimizations"
+          flutter clean
+          flutter pub get
+          if flutter build apk --debug --verbose --no-tree-shake-icons; then
+            echo "✅ Minimal optimization build succeeded"
+          else
+            echo "❌ Minimal optimization failed, trying architecture-specific build..."
+            
+            # Method 3: Target specific architecture
+            echo "🔨 Attempt 3: Architecture-specific build (ARM64)"
+            flutter clean
+            flutter pub get
+            if flutter build apk --debug --verbose --target-platform=android-arm64; then
+              echo "✅ ARM64-specific build succeeded"
+            else
+              echo "❌ Architecture-specific build failed, trying without verbose..."
+              
+              # Method 4: Simple build without verbose
+              echo "🔨 Attempt 4: Simple debug build"
+              flutter clean
+              flutter pub get
+              if flutter build apk --debug; then
+                echo "✅ Simple debug build succeeded"
+              else
+                echo "❌ All debug build methods failed!"
+                echo "🔍 Diagnostic information:"
+                flutter doctor -v
+                echo "🔍 Android SDK status:"
+                flutter config --android-sdk
+                echo "🔍 Gradle wrapper status:"
+                chmod +x android/gradlew || echo "Gradlew not found"
+                exit 1
+              fi
+            fi
+          fi
+        fi
+        
+        echo "📁 Checking for APK files after build..."
+        find build/ -type f -name "*.apk" || echo "No APK files found after build"
         
     - name: Verify debug APK was created
       run: |
