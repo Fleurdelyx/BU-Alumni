@@ -10,6 +10,7 @@ jobs:
   build:
     name: Build APK
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     
     steps:
     - name: Checkout code
@@ -26,68 +27,88 @@ jobs:
       with:
         flutter-version: '3.19.0'
         channel: 'stable'
+        cache: true
 
-    - name: Get dependencies
-      run: flutter pub get
+    - name: Create directories 
+      run: |
+        mkdir -p android/app
+        ls -la android/app/
 
-    - name: Build APK (Debug)
-      run: flutter build apk --debug
-      
-    - name: Build APK (Release)
-      run: flutter build apk --release
+    - name: Verify Firebase config
+      run: |
+        if [ ! -f "android/app/google-services.json" ]; then
+          echo "❌ google-services.json not found!"
+          exit 1
+        else
+          echo "✅ google-services.json found"
+        fi
 
+    - name: Flutter doctor
+      run: flutter doctor -v
+    
+    - name: Clean and get dependencies
+      run: |
+        flutter clean
+        flutter pub get
+        flutter pub deps
+
+    - name: Build APK (Debug) with verbose output
+      run: |
+        echo "🔧 Building debug APK..."
+        flutter build apk --debug --verbose
+        
+    - name: Build APK (Release) with verbose output  
+      run: |
+        echo "🔧 Building release APK..."
+        flutter build apk --release --verbose
+
+    - name: List APK files
+      run: |
+        echo "📦 Checking built APK files..."
+        ls -la build/app/outputs/flutter-apk/
+        file build/app/outputs/flutter-apk/*.apk
+        
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: BU Alumni Tracer ${{ github.ref }}
+        tag_name: ${{ github.ref_name }}
+        name: BU Alumni Tracer ${{ github.ref_name }}
         body: |
-          ## 📱 Download APK
+          ## 📱 Download APK Files
           
-          **For Testing (Recommended):**
-          - Download `app-debug.apk` - includes debugging information
+          **For Testing on Your Phone (Recommended):**
+          - 📥 **Download `bu-alumni-tracer-debug.apk`**
+          - Includes debugging information for easier troubleshooting
           
-          **For Production:**
-          - Download `app-release.apk` - optimized version
+          **For Production Use:**
+          - 📥 **Download `bu-alumni-tracer-release.apk`**
+          - Optimized and smaller file size
           
-          ## 🔧 Installation Instructions
-          1. Enable "Install from Unknown Sources" in your Android settings
-          2. Download the APK file
-          3. Open the downloaded file and install
+          ## 📱 Installation Instructions
+          1. **Enable Unknown Sources**: Go to Settings → Security → Enable "Install from Unknown Sources"
+          2. **Download APK**: Click one of the APK files above  
+          3. **Install**: Open the downloaded file and follow the installation prompts
+          4. **Launch**: Find "BU Alumni Tracer" in your app drawer
           
           ## ✨ Features in this Release
-          - Alumni tracer study functionality
-          - Firebase authentication and data sync
-          - Dark/Light mode theme switching
-          - Interactive questionnaires
-          - Participant directory
-          - Statistics and analytics
-          - AI-powered chatbot (BUddy)
+          - 👥 Alumni directory and participant management
+          - 🔐 Secure Firebase authentication  
+          - 🎨 Dark/Light mode theme switching
+          - 📊 Interactive questionnaires and surveys
+          - 📈 Statistics and analytics dashboard
+          - 🤖 AI-powered chatbot assistance (BUddy)
+          - 📱 Offline capabilities with data sync
+          
+          ## 🐛 Found a Bug?
+          Report issues at: https://github.com/Fleurdelyx/BU-Alumni/issues
+        files: |
+          build/app/outputs/flutter-apk/app-debug.apk
+          build/app/outputs/flutter-apk/app-release.apk
         draft: false
         prerelease: false
-
-    - name: Upload Debug APK
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: build/app/outputs/flutter-apk/app-debug.apk
-        asset_name: bu-alumni-tracer-debug.apk
-        asset_content_type: application/vnd.android.package-archive
-
-    - name: Upload Release APK
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: build/app/outputs/flutter-apk/app-release.apk
-        asset_name: bu-alumni-tracer-release.apk
-        asset_content_type: application/vnd.android.package-archive
 
   # Build on pull requests for testing
   test-build:

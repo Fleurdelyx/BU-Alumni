@@ -1,0 +1,81 @@
+name: Simple APK Build (Backup)
+
+on:
+  workflow_dispatch:  # Manual trigger only
+
+jobs:
+  simple-build:
+    name: Simple APK Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Flutter (Latest Stable)
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+        cache: true
+
+    - name: Flutter doctor and version info
+      run: |
+        flutter doctor -v
+        flutter --version
+        java -version
+
+    - name: Check project structure
+      run: |
+        echo "📁 Project structure:"
+        ls -la
+        echo "🔧 Android structure:"
+        ls -la android/
+        echo "📱 App structure:"
+        ls -la android/app/
+
+    - name: Flutter clean and pub get
+      run: |
+        echo "🧹 Cleaning previous builds..."
+        flutter clean
+        echo "📦 Getting dependencies..."
+        flutter pub get --verbose
+
+    - name: Try building debug APK only (safer)
+      run: |
+        echo "🔨 Building debug APK..."
+        flutter build apk --debug --verbose --no-shrink
+        
+    - name: List output files  
+      run: |
+        echo "📦 Build outputs:"
+        find build/ -name "*.apk" -type f
+        ls -la build/app/outputs/flutter-apk/
+        
+    - name: Upload APK as artifact (for download)
+      uses: actions/upload-artifact@v4
+      with:
+        name: bu-alumni-debug-apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
+        retention-days: 30
+        
+    # If debug works, try release
+    - name: Try building release APK
+      continue-on-error: true
+      run: |
+        echo "🚀 Attempting release APK..."
+        flutter build apk --release --verbose --no-shrink
+        
+    - name: Upload release APK if successful
+      continue-on-error: true
+      uses: actions/upload-artifact@v4
+      with:
+        name: bu-alumni-release-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
+        retention-days: 30
