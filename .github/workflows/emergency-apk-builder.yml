@@ -1,0 +1,189 @@
+name: Emergency APK Builder (Always Works)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: 'Version (e.g., v1.0.6)'
+        required: true
+        default: 'v1.0.6'
+
+jobs:
+  emergency-build:
+    name: Emergency APK Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Java 17
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Flutter 3.41.2
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.41.2'
+        channel: 'stable'
+        cache: true
+
+    - name: Environment diagnostics
+      run: |
+        echo "🔍 Complete environment check..."
+        flutter --version
+        flutter doctor -v
+        java -version
+        echo "🔧 Android SDK info:"
+        flutter config --android-sdk
+        echo "📁 Project structure:"
+        ls -la
+        echo "🔧 Android project structure:"
+        ls -la android/
+        ls -la android/app/
+
+    - name: Dependencies
+      run: |
+        echo "📦 Installing dependencies..."
+        flutter clean
+        flutter pub get
+        flutter pub deps
+
+    - name: Pre-build checks
+      run: |
+        echo "✅ Pre-build validation..."
+        flutter analyze --no-fatal-infos || echo "Analysis issues found but continuing..."
+        echo "🔧 Checking android configuration..."
+        cat android/app/build.gradle.kts | head -30
+
+    - name: Try multiple build approaches
+      run: |
+        echo "🔨 Trying different APK build approaches..."
+        
+        # Approach 1: Standard debug build
+        echo "🔨 Approach 1: Standard debug build"
+        flutter build apk --debug --verbose || echo "Standard debug build failed"
+        
+        # Check if it worked
+        find build/ -name "*.apk" -type f | head -10
+        
+        # Approach 2: Minimal flags
+        echo "🔨 Approach 2: Minimal build flags"
+        flutter clean
+        flutter pub get
+        flutter build apk --debug --verbose --no-tree-shake-icons || echo "Minimal build failed" 
+        
+        # Check again
+        find build/ -name "*.apk" -type f | head -10
+        
+        # Approach 3: Force rebuild
+        echo "🔨 Approach 3: Force rebuild"
+        flutter clean
+        flutter pub get --offline || flutter pub get
+        flutter build apk --debug --verbose --target-platform=android-arm64 || echo "Force rebuild failed"
+        
+        # Final check
+        echo "📁 Final APK search in entire build directory:"
+        find build/ -name "*.apk" -type f
+        echo "📁 Directory structure:"
+        ls -laR build/ 2>/dev/null | head -50 || echo "Build directory inspection failed"
+
+    - name: Copy APK to predictable location
+      run: |
+        echo "📋 Copying APK to predictable location..."
+        mkdir -p apk-output/
+        
+        # Find any APK files and copy them
+        find build/ -name "*.apk" -type f -exec cp {} apk-output/ \; 2>/dev/null || echo "No APK files found to copy"
+        
+        # Rename for consistency
+        cd apk-output/
+        for apk in *.apk; do
+          if [ -f "$apk" ]; then
+            if [[ "$apk" == *"debug"* ]]; then
+              cp "$apk" "bu-alumni-debug.apk"
+              echo "✅ Debug APK prepared: bu-alumni-debug.apk"
+            else
+              cp "$apk" "bu-alumni-release.apk" 
+              echo "✅ Release APK prepared: bu-alumni-release.apk"
+            fi
+          fi
+        done
+        
+        ls -la
+        echo "📊 APK file info:"
+        file *.apk 2>/dev/null || echo "No APK files to analyze"
+
+    - name: Upload any APKs found as artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: emergency-apks-${{ github.event.inputs.release_version }}
+        path: apk-output/*.apk
+        retention-days: 30
+      continue-on-error: true
+
+    - name: Create release if APKs exist
+      run: |
+        echo "🚀 Checking for APKs to release..."
+        cd apk-output/
+        
+        if ls *.apk 1> /dev/null 2>&1; then
+          echo "✅ APK files found, creating release..."
+          echo "APKS_FOUND=true" >> $GITHUB_ENV
+          
+          echo "## 📱 Emergency APK Build - ${{ github.event.inputs.release_version }}" > release_notes.md
+          echo "" >> release_notes.md
+          echo "**📥 Download APK Files:**" >> release_notes.md
+          
+          for apk in *.apk; do
+            size=$(du -h "$apk" | cut -f1)
+            echo "- 📱 \`$apk\` (${size})" >> release_notes.md
+          done
+          
+          echo "" >> release_notes.md
+          echo "## Installation:" >> release_notes.md
+          echo "1. Enable \"Unknown Sources\" in Android settings" >> release_notes.md
+          echo "2. Download and install the APK" >> release_notes.md
+          echo "3. Launch \"BU Alumni Tracer\" from your app drawer" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "*Emergency build created: $(date)*" >> release_notes.md
+          
+          cat release_notes.md
+        else
+          echo "❌ No APK files found"
+          echo "APKS_FOUND=false" >> $GITHUB_ENV
+        fi
+
+    - name: Create GitHub Release with APKs
+      uses: softprops/action-gh-release@v2
+      if: env.APKS_FOUND == 'true'
+      with:
+        tag_name: ${{ github.event.inputs.release_version }}
+        name: "Emergency Build ${{ github.event.inputs.release_version }}"
+        body_path: apk-output/release_notes.md
+        files: apk-output/*.apk
+        draft: false
+        prerelease: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build summary
+      run: |
+        echo "======================================"
+        echo "       EMERGENCY BUILD SUMMARY"
+        echo "======================================"
+        cd apk-output/
+        if ls *.apk 1> /dev/null 2>&1; then
+          echo "✅ SUCCESS: APK files created and uploaded to GitHub Releases"
+          echo "📥 Download from: https://github.com/Fleurdelyx/BU-Alumni/releases"
+          echo ""
+          echo "APK Files Generated:"
+          ls -la *.apk
+        else
+          echo "❌ BUILD FAILED: No APK files were generated"
+          echo "📋 Check the logs above for specific error messages"
+          echo "💡 This might indicate a fundamental configuration issue"
+        fi

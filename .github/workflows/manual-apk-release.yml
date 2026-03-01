@@ -49,23 +49,81 @@ jobs:
       run: |
         echo "🔨 Building debug APK..."
         flutter build apk --debug --verbose
+        echo "📁 Checking build output directory structure..."
+        find build/ -type f -name "*.apk" || echo "No APK files found yet"
+        ls -la build/app/outputs/ || echo "No outputs directory"
+        
+    - name: Verify debug APK was created
+      run: |
+        echo "🔍 Verifying debug APK exists..."
+        if [ ! -f "build/app/outputs/flutter-apk/app-debug.apk" ]; then
+          echo "❌ Debug APK not found in expected location"
+          echo "🔍 Searching for APK files in build directory..."
+          find build/ -name "*.apk" -type f
+          echo "📂 Build directory contents:"
+          ls -la build/
+          echo "📂 App directory contents:"
+          ls -la build/app/ || echo "No app directory"
+          echo "📂 Outputs directory contents:"
+          ls -la build/app/outputs/ || echo "No outputs directory"
+          exit 1
+        else
+          echo "✅ Debug APK found successfully"
+          ls -la build/app/outputs/flutter-apk/app-debug.apk
+        fi
         
     - name: Build release APK
       run: |
         echo "🚀 Building release APK..."
         flutter build apk --release --verbose
         
-    - name: Verify APK files
+    - name: Verify release APK was created  
       run: |
-        echo "📱 Checking APKs were built successfully..."
-        ls -la build/app/outputs/flutter-apk/
-        echo "📊 APK file details:"
-        file build/app/outputs/flutter-apk/*.apk
-        echo "📏 APK file sizes:"
-        du -h build/app/outputs/flutter-apk/*.apk
+        echo "🔍 Verifying release APK exists..."
+        if [ ! -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+          echo "❌ Release APK not found in expected location"
+          echo "🔍 Searching for APK files in build directory..."
+          find build/ -name "*.apk" -type f
+          exit 1
+        else
+          echo "✅ Release APK found successfully"
+          ls -la build/app/outputs/flutter-apk/app-release.apk
+        fi
+        
+    - name: Verify APK files for release
+      id: check_apks
+      run: |
+        echo "📱 Final verification of APK files..."
+        DEBUG_APK="build/app/outputs/flutter-apk/app-debug.apk"
+        RELEASE_APK="build/app/outputs/flutter-apk/app-release.apk"
+        
+        echo "DEBUG_EXISTS=false" >> $GITHUB_OUTPUT
+        echo "RELEASE_EXISTS=false" >> $GITHUB_OUTPUT
+        
+        if [ -f "$DEBUG_APK" ]; then
+          echo "✅ Debug APK ready for release"
+          ls -la "$DEBUG_APK"
+          file "$DEBUG_APK"
+          echo "DEBUG_EXISTS=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Debug APK missing"
+        fi
+        
+        if [ -f "$RELEASE_APK" ]; then
+          echo "✅ Release APK ready for release"
+          ls -la "$RELEASE_APK"
+          file "$RELEASE_APK"
+          echo "RELEASE_EXISTS=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Release APK missing"
+        fi
+        
+        echo "📊 APK file sizes:"
+        du -h build/app/outputs/flutter-apk/*.apk 2>/dev/null || echo "No APK files to measure"
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
+      if: steps.check_apks.outputs.DEBUG_EXISTS == 'true' || steps.check_apks.outputs.RELEASE_EXISTS == 'true'
       with:
         tag_name: ${{ github.event.inputs.release_name }}
         name: "BU Alumni Tracer ${{ github.event.inputs.release_name }}"
@@ -73,12 +131,10 @@ jobs:
           ## 📱 BU Alumni Tracer APK Downloads
           
           **👨‍🎓 For Testing (Recommended):**
-          - 📥 **Download `bu-alumni-tracer-debug.apk`** 
-          - Includes debugging features and detailed error reporting
+          ${{ steps.check_apks.outputs.DEBUG_EXISTS == 'true' && '- 📥 **Download `app-debug.apk`**' || '- ❌ Debug APK build failed' }}
           
           **🏢 For Production Use:**
-          - 📥 **Download `bu-alumni-tracer-release.apk`**
-          - Smaller, optimized for performance
+          ${{ steps.check_apks.outputs.RELEASE_EXISTS == 'true' && '- 📥 **Download `app-release.apk`**' || '- ❌ Release APK build failed' }}
           
           ## 📱 Installation Instructions
           
@@ -103,8 +159,7 @@ jobs:
           ---
           *Built on: ${{ github.run_number }} • Commit: ${{ github.sha }}*
         files: |
-          build/app/outputs/flutter-apk/app-debug.apk
-          build/app/outputs/flutter-apk/app-release.apk
+          build/app/outputs/flutter-apk/*.apk
         draft: false
         prerelease: false
       env:
