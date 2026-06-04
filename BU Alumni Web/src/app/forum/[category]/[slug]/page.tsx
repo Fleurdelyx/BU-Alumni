@@ -118,35 +118,28 @@ function ThreadDetailContent() {
         return;
       }
 
-      const { data: thr, error } = await supabase
+      // Try simple query first (no joins) to isolate RLS vs join issues
+      const { data: simpleThr, error: simpleErr } = await supabase
         .from('forum_threads')
-        .select('*, author:profiles(*), category:forum_categories(id, slug, name)')
+        .select('*')
         .eq('id', threadId)
         .single();
 
-      if (error || !thr) {
-        console.warn('[ThreadDetail] Thread not found for id:', threadId);
-        console.warn('[ThreadDetail] Error code:', (error as any)?.code, 'Message:', (error as any)?.message, 'Details:', (error as any)?.details);
-        // Fallback: try by slug just in case
-        const { data: bySlug } = await supabase
-          .from('forum_threads')
-          .select('*, author:profiles(*), category:forum_categories(id, slug, name)')
-          .eq('slug', threadId)
-          .single();
-        if (bySlug) {
-          console.log('[ThreadDetail] Found by slug fallback');
-          setThread(bySlug as ThreadWithRelations);
-          setEditTitle(bySlug.title);
-          setEditBody(bySlug.body);
-          setReplyCount(bySlug.reply_count || 0);
-          await supabase.rpc('increment_thread_view', { thread_id: bySlug.id });
-          setLoading(false);
-          return;
-        }
+      console.log('[ThreadDetail] Simple query result:', { simpleThr: !!simpleThr, simpleErrCode: (simpleErr as any)?.code, simpleErrMsg: (simpleErr as any)?.message });
+
+      if (simpleErr || !simpleThr) {
+        console.warn('[ThreadDetail] Simple query failed. ID:', threadId, 'Code:', (simpleErr as any)?.code, 'Msg:', (simpleErr as any)?.message);
         setLoading(false);
         return;
       }
 
+      // Fetch author and category separately
+      const [{ data: author }, { data: category }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', simpleThr.author_id).single(),
+        supabase.from('forum_categories').select('id, slug, name').eq('id', simpleThr.category_id).single(),
+      ]);
+
+      const thr = { ...simpleThr, author: author || null, category: category || null };
       setThread(thr as ThreadWithRelations);
       setEditTitle(thr.title);
       setEditBody(thr.body);
