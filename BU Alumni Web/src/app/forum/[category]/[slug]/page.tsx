@@ -110,6 +110,14 @@ function ThreadDetailContent() {
   useEffect(() => {
     async function load() {
       setLoading(true);
+      console.log('[ThreadDetail] Loading thread. ID:', threadId, 'Category:', categorySlug);
+
+      if (!threadId || threadId === 'undefined' || threadId === 'null') {
+        console.error('[ThreadDetail] Invalid threadId:', threadId);
+        setLoading(false);
+        return;
+      }
+
       const { data: thr, error } = await supabase
         .from('forum_threads')
         .select('*, author:profiles(*), category:forum_categories(id, slug, name)')
@@ -117,7 +125,23 @@ function ThreadDetailContent() {
         .single();
 
       if (error || !thr) {
-        console.warn('[ThreadDetail] Thread not found for id:', threadId, error);
+        console.warn('[ThreadDetail] Thread not found for id:', threadId, 'Error:', error);
+        // Fallback: try by slug just in case
+        const { data: bySlug } = await supabase
+          .from('forum_threads')
+          .select('*, author:profiles(*), category:forum_categories(id, slug, name)')
+          .eq('slug', threadId)
+          .single();
+        if (bySlug) {
+          console.log('[ThreadDetail] Found by slug fallback');
+          setThread(bySlug as ThreadWithRelations);
+          setEditTitle(bySlug.title);
+          setEditBody(bySlug.body);
+          setReplyCount(bySlug.reply_count || 0);
+          await supabase.rpc('increment_thread_view', { thread_id: bySlug.id });
+          setLoading(false);
+          return;
+        }
         setLoading(false);
         return;
       }
@@ -431,7 +455,9 @@ function ThreadDetailContent() {
     return (
       <AppLayout>
         <div className="text-center py-12 text-muted-foreground max-w-4xl mx-auto">
-          Thread not found.
+          <p className="text-lg font-medium mb-2">Thread not found.</p>
+          <p className="text-sm font-mono bg-muted px-3 py-1 rounded inline-block">id: {threadId || 'undefined'}</p>
+          <p className="text-sm mt-2">Open DevTools (F12) → Console for debug info.</p>
         </div>
       </AppLayout>
     );
