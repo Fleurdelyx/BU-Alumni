@@ -114,9 +114,9 @@ export default function DirectoryPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 max-w-7xl mx-auto pt-6">
         <div>
-          <h1 className="text-3xl font-bold font-display text-forest">
+          <h1 className="text-3xl font-bold font-display text-forest dark:text-sidebar-foreground">
             Alumni Directory
           </h1>
           <p className="text-muted-foreground mt-1">

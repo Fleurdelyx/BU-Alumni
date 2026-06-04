@@ -1,19 +1,31 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+import { createSupabaseAdmin, verifyUser } from '../_shared/auth.ts';
 
 serve(async (req) => {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
   }
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  );
+  const { user, error: authError } = await verifyUser(req);
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+  }
+
+  const supabase = createSupabaseAdmin();
 
   try {
     const { record } = await req.json();
+
+    if (!record || typeof record !== 'object' || !record.thread_id || !record.author_id) {
+      return new Response(JSON.stringify({ error: 'Invalid payload' }), { status: 400 });
+    }
+
     const { thread_id, author_id, parent_id, id: reply_id } = record;
+
+    // Verify the actor matches the authenticated user
+    if (author_id !== user.id) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+    }
 
     // Get thread info
     const { data: thread } = await supabase
@@ -56,8 +68,8 @@ serve(async (req) => {
       }
     }
 
-    // Update thread's last_reply_at and reply_count
-    await supabase.rpc('increment_reply_count', { thread_uuid: thread_id });
+    // Update thread's last_reply_at, reply_count, and last_reply_by
+    await supabase.rpc('increment_reply_count', { thread_uuid: thread_id, author_uuid: author_id });
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' },

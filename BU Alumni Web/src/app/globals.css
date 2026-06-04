@@ -4,21 +4,19 @@
 
 @layer base {
   :root {
-    /* BU Brand Palette */
-    --color-forest: #004011;
-    --color-emerald: #006D1D;
-    --color-primary: #4C992D;
-    --color-meadow: #6CB84A;
-    --color-sage: #A8D695;
-    --color-mint: #E0F2E7;
-
-    --color-ink: #0F1A0C;
-    --color-charcoal: #2D3B28;
-    --color-slate: #5A6B54;
-    --color-mist: #B8C4B4;
-    --color-fog: #E8EDE6;
-    --color-paper: #F7F9F6;
-    --color-white: #FFFFFF;
+    /* BU Brand Palette — HSL for Tailwind opacity support */
+    --paper: 100 20% 97%;
+    --forest: 130 100% 13%;
+    --emerald: 140 100% 22%;
+    --meadow: 100 50% 50%;
+    --sage: 100 40% 72%;
+    --mint: 130 40% 92%;
+    --ink: 100 30% 8%;
+    --charcoal: 100 18% 19%;
+    --slate: 100 10% 38%;
+    --mist: 100 10% 74%;
+    --fog: 100 15% 92%;
+    --white: 0 0% 100%;
 
     /* Shadcn variables mapped to BU palette */
     --background: 100 20% 97%; /* paper */
@@ -60,6 +58,21 @@
   }
 
   .dark {
+    /* Brand palette — dark mode */
+    --paper: 120 20% 5%;
+    --forest: 130 60% 88%;
+    --emerald: 140 70% 45%;
+    --meadow: 100 50% 58%;
+    --sage: 100 30% 45%;
+    --mint: 130 25% 20%;
+    --ink: 100 20% 95%;
+    --charcoal: 100 10% 82%;
+    --slate: 100 20% 68%;
+    --mist: 100 12% 28%;
+    --fog: 120 12% 12%;
+    --white: 120 15% 10%;
+
+    /* Shadcn — dark mode */
     --background: 120 30% 5%;
     --foreground: 100 20% 95%;
     --card: 120 25% 8%;
@@ -85,6 +98,12 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
+  }
   * {
     @apply border-border;
   }
@@ -95,4 +114,88 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Playfair Display', Georgia, serif;
   }
+}
+
+/* Hide Edge/IE native password reveal button to prevent overlap with custom eye icon */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+/* Animated gradient backgrounds */
+.gradient-animate {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
+}
+
+/* Glassmorphism utilities */
+.glass {
+  background: hsl(var(--white) / 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+.dark .glass {
+  background: hsl(120 25% 8% / 0.7);
+}
+
+.glass-dark {
+  background: hsl(120 25% 8% / 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
+/* Text gradient */
+.text-gradient {
+  background: linear-gradient(135deg, #4C992D 0%, #6CB84A 50%, #155F28 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Shimmer effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--mist));
+  border-radius: 4px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(100 12% 28%);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--slate));
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(100 20% 45%);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: hsl(var(--primary) / 0.3);
+  color: inherit;
+}
+.dark ::selection {
+  background: hsl(var(--primary) / 0.4);
 }

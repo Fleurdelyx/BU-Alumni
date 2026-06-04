@@ -21,6 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { AppearanceForm } from './_components/appearance-form';
 import { AccountForm } from './_components/account-form';
+import { SecurityForm } from './_components/security-form';
 
 function NotificationsForm() {
   const [prefs, setPrefs] = useState({
@@ -101,9 +102,9 @@ function NotificationsForm() {
 export default function SettingsPage() {
   return (
     <AppLayout>
-      <div className="space-y-6 max-w-3xl">
+      <div className="space-y-6 max-w-5xl mx-auto pt-6">
         <div>
-          <h1 className="text-3xl font-bold font-display text-forest">Settings</h1>
+          <h1 className="text-3xl font-bold font-display text-forest dark:text-sidebar-foreground">Settings</h1>
           <p className="text-muted-foreground mt-1">
             Manage your account settings and preferences.
           </p>
@@ -113,6 +114,7 @@ export default function SettingsPage() {
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
           </TabsList>
           <TabsContent value="appearance">
             <AppearanceForm />
@@ -122,6 +124,9 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="account">
             <AccountForm />
+          </TabsContent>
+          <TabsContent value="security">
+            <SecurityForm />
           </TabsContent>
         </Tabs>
       </div>

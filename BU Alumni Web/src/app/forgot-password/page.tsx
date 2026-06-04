@@ -36,11 +36,14 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-paper p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-display font-bold text-forest">BU Alumni</h1>
-          <p className="text-slate mt-2">Reset your password</p>
+          <div className="h-20 w-20 mx-auto mb-4 rounded-xl bg-primary/10 flex items-center justify-center p-1">
+            <img src="/logos/bu.png" alt="Baliuag University" className="h-full w-full object-contain" />
+          </div>
+          <h1 className="text-3xl font-display font-bold text-foreground">BU Alumni</h1>
+          <p className="text-muted-foreground mt-2">Reset your password</p>
         </div>
 
         <Card>
@@ -79,7 +82,7 @@ export default function ForgotPasswordPage() {
           </form>
         </Card>
 
-        <p className="text-center text-sm text-slate mt-6">
+        <p className="text-center text-sm text-muted-foreground mt-6">
           <Link href="/login" className="text-primary font-medium hover:underline">
             Back to sign in
           </Link>

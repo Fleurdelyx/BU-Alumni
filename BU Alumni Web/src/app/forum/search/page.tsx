@@ -3,20 +3,19 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, useCallback, Suspense } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/app-layout';
 import { createClient } from '@/lib/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { ForumThread, Profile } from '@/lib/types';
-import { formatDistanceToNow } from 'date-fns';
-import { Search, MessageSquare, Eye } from 'lucide-react';
+import { ThreadCard } from '@/components/forum/thread-card';
+import { Pagination } from '@/components/forum/pagination';
+import type { ForumThread } from '@/lib/types';
+import { Search } from 'lucide-react';
 
-type ThreadWithAuthor = ForumThread & { author: Profile | null };
+const RESULTS_PER_PAGE = 20;
+
+type ThreadWithAuthor = ForumThread & { author: { full_name: string; avatar_url: string | null } | null };
 
 function ForumSearchContent() {
   const supabase = createClient();
@@ -27,22 +26,34 @@ function ForumSearchContent() {
   const [results, setResults] = useState<ThreadWithAuthor[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
   const performSearch = useCallback(
-    async (searchQuery: string) => {
+    async (searchQuery: string, pageNum: number) => {
       if (!searchQuery.trim()) return;
       setLoading(true);
       setSearched(true);
 
-      const { data } = await supabase
+      const start = pageNum * RESULTS_PER_PAGE;
+      const end = start + RESULTS_PER_PAGE - 1;
+
+      const { data, count } = await supabase
         .from('forum_threads')
-        .select('*, author:profiles(*), category:forum_categories(*)')
+        .select('*, author:profiles(full_name, avatar_url), category:forum_categories(*)', { count: 'exact' })
+        .eq('is_deleted', false)
         .textSearch('search_vector', searchQuery, {
           type: 'websearch',
           config: 'english',
-        });
+        })
+        .range(start, end);
 
-      setResults((data || []) as ThreadWithAuthor[]);
+      if (pageNum === 0) {
+        setResults((data || []) as ThreadWithAuthor[]);
+      } else {
+        setResults((prev) => [...prev, ...(data || []) as ThreadWithAuthor[]]);
+      }
+      setHasMore((count || 0) > (pageNum + 1) * RESULTS_PER_PAGE);
       setLoading(false);
     },
     [supabase]
@@ -50,16 +61,24 @@ function ForumSearchContent() {
 
   useEffect(() => {
     if (initialQuery) {
-      performSearch(initialQuery);
+      setPage(0);
+      performSearch(initialQuery, 0);
     }
   }, [initialQuery, performSearch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    performSearch(query);
+    setPage(0);
+    performSearch(query, 0);
     const url = new URL(window.location.href);
     url.searchParams.set('q', query);
     window.history.replaceState({}, '', url);
+  };
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    performSearch(query, nextPage);
   };
 
   return (
@@ -80,7 +99,7 @@ function ForumSearchContent() {
           />
         </form>
 
-        {loading ? (
+        {loading && results.length === 0 ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-lg" />
@@ -93,45 +112,16 @@ function ForumSearchContent() {
         ) : (
           <div className="space-y-3">
             {results.map((thread) => (
-              <Link key={thread.id} href={`/forum/${thread.category?.slug}/${thread.slug}`}>
-                <Card className="hover:shadow-md transition-shadow border-mist">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={thread.author?.avatar_url || ''} alt={thread.author?.full_name || ''} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                          {thread.author?.full_name?.[0] || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-display font-semibold text-forest truncate">{thread.title}</h3>
-                        <p className="text-sm text-slate mt-0.5">
-                          {thread.author?.full_name || 'Unknown'} · {thread.category?.name} ·{' '}
-                          {formatDistanceToNow(new Date(thread.created_at))} ago
-                        </p>
-                        <div className="flex items-center gap-4 mt-2">
-                          <span className="flex items-center gap-1 text-xs text-slate">
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            {thread.reply_count || 0}
-                          </span>
-                          <span className="flex items-center gap-1 text-xs text-slate">
-                            <Eye className="h-3.5 w-3.5" />
-                            {thread.view_count || 0}
-                          </span>
-                          {thread.tags?.map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-[10px]">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <ThreadCard
+                key={thread.id}
+                thread={thread}
+                category={thread.category}
+              />
             ))}
           </div>
         )}
+
+        <Pagination hasMore={hasMore} onLoadMore={handleLoadMore} loading={loading && results.length > 0} />
       </div>
     </AppLayout>
   );

@@ -66,6 +66,129 @@ const REGIONS = [
   'Region XIII',
 ];
 
+const PROVINCES: { name: string; region: string }[] = [
+  // NCR
+  { name: 'Caloocan', region: 'NCR' },
+  { name: 'Las Piñas', region: 'NCR' },
+  { name: 'Makati', region: 'NCR' },
+  { name: 'Malabon', region: 'NCR' },
+  { name: 'Mandaluyong', region: 'NCR' },
+  { name: 'Manila', region: 'NCR' },
+  { name: 'Marikina', region: 'NCR' },
+  { name: 'Muntinlupa', region: 'NCR' },
+  { name: 'Navotas', region: 'NCR' },
+  { name: 'Parañaque', region: 'NCR' },
+  { name: 'Pasay', region: 'NCR' },
+  { name: 'Pasig', region: 'NCR' },
+  { name: 'Pateros', region: 'NCR' },
+  { name: 'Quezon City', region: 'NCR' },
+  { name: 'San Juan', region: 'NCR' },
+  { name: 'Taguig', region: 'NCR' },
+  { name: 'Valenzuela', region: 'NCR' },
+  // CAR
+  { name: 'Abra', region: 'CAR' },
+  { name: 'Apayao', region: 'CAR' },
+  { name: 'Benguet', region: 'CAR' },
+  { name: 'Ifugao', region: 'CAR' },
+  { name: 'Kalinga', region: 'CAR' },
+  { name: 'Mountain Province', region: 'CAR' },
+  // Region I
+  { name: 'Ilocos Norte', region: 'Region I' },
+  { name: 'Ilocos Sur', region: 'Region I' },
+  { name: 'La Union', region: 'Region I' },
+  { name: 'Pangasinan', region: 'Region I' },
+  // Region II
+  { name: 'Batanes', region: 'Region II' },
+  { name: 'Cagayan', region: 'Region II' },
+  { name: 'Isabela', region: 'Region II' },
+  { name: 'Nueva Vizcaya', region: 'Region II' },
+  { name: 'Quirino', region: 'Region II' },
+  // Region III
+  { name: 'Aurora', region: 'Region III' },
+  { name: 'Bataan', region: 'Region III' },
+  { name: 'Bulacan', region: 'Region III' },
+  { name: 'Nueva Ecija', region: 'Region III' },
+  { name: 'Pampanga', region: 'Region III' },
+  { name: 'Tarlac', region: 'Region III' },
+  { name: 'Zambales', region: 'Region III' },
+  // Region IV (Calabarzon + Mimaropa combined in the dropdown)
+  { name: 'Batangas', region: 'Region IV' },
+  { name: 'Cavite', region: 'Region IV' },
+  { name: 'Laguna', region: 'Region IV' },
+  { name: 'Quezon', region: 'Region IV' },
+  { name: 'Rizal', region: 'Region IV' },
+  { name: 'Marinduque', region: 'Region IV' },
+  { name: 'Occidental Mindoro', region: 'Region IV' },
+  { name: 'Oriental Mindoro', region: 'Region IV' },
+  { name: 'Palawan', region: 'Region IV' },
+  { name: 'Romblon', region: 'Region IV' },
+  // Region V
+  { name: 'Albay', region: 'Region V' },
+  { name: 'Camarines Norte', region: 'Region V' },
+  { name: 'Camarines Sur', region: 'Region V' },
+  { name: 'Catanduanes', region: 'Region V' },
+  { name: 'Masbate', region: 'Region V' },
+  { name: 'Sorsogon', region: 'Region V' },
+  // Region VI
+  { name: 'Aklan', region: 'Region VI' },
+  { name: 'Antique', region: 'Region VI' },
+  { name: 'Capiz', region: 'Region VI' },
+  { name: 'Guimaras', region: 'Region VI' },
+  { name: 'Iloilo', region: 'Region VI' },
+  { name: 'Negros Occidental', region: 'Region VI' },
+  // Region VII
+  { name: 'Bohol', region: 'Region VII' },
+  { name: 'Cebu', region: 'Region VII' },
+  { name: 'Negros Oriental', region: 'Region VII' },
+  { name: 'Siquijor', region: 'Region VII' },
+  // Region VIII
+  { name: 'Biliran', region: 'Region VIII' },
+  { name: 'Eastern Samar', region: 'Region VIII' },
+  { name: 'Leyte', region: 'Region VIII' },
+  { name: 'Northern Samar', region: 'Region VIII' },
+  { name: 'Samar', region: 'Region VIII' },
+  { name: 'Southern Leyte', region: 'Region VIII' },
+  // Region IX
+  { name: 'Zamboanga del Norte', region: 'Region IX' },
+  { name: 'Zamboanga del Sur', region: 'Region IX' },
+  { name: 'Zamboanga Sibugay', region: 'Region IX' },
+  // Region X
+  { name: 'Bukidnon', region: 'Region X' },
+  { name: 'Camiguin', region: 'Region X' },
+  { name: 'Lanao del Norte', region: 'Region X' },
+  { name: 'Misamis Occidental', region: 'Region X' },
+  { name: 'Misamis Oriental', region: 'Region X' },
+  // Region XI
+  { name: 'Compostela Valley', region: 'Region XI' },
+  { name: 'Davao del Norte', region: 'Region XI' },
+  { name: 'Davao del Sur', region: 'Region XI' },
+  { name: 'Davao Occidental', region: 'Region XI' },
+  { name: 'Davao Oriental', region: 'Region XI' },
+  // Region XII
+  { name: 'Cotabato', region: 'Region XII' },
+  { name: 'Sarangani', region: 'Region XII' },
+  { name: 'South Cotabato', region: 'Region XII' },
+  { name: 'Sultan Kudarat', region: 'Region XII' },
+  // Region XIII / CARAGA
+  { name: 'Agusan del Norte', region: 'CARAGA' },
+  { name: 'Agusan del Sur', region: 'CARAGA' },
+  { name: 'Dinagat Islands', region: 'CARAGA' },
+  { name: 'Surigao del Norte', region: 'CARAGA' },
+  { name: 'Surigao del Sur', region: 'CARAGA' },
+  // ARMM / Bangsamoro
+  { name: 'Basilan', region: 'ARMM' },
+  { name: 'Lanao del Sur', region: 'ARMM' },
+  { name: 'Maguindanao', region: 'ARMM' },
+  { name: 'Sulu', region: 'ARMM' },
+  { name: 'Tawi-Tawi', region: 'ARMM' },
+];
+
+const PROVINCE_NAMES = PROVINCES.map((p) => p.name).sort((a, b) => a.localeCompare(b));
+
+function getRegionForProvince(provinceName: string): string | undefined {
+  return PROVINCES.find((p) => p.name === provinceName)?.region;
+}
+
 const COURSE_REASONS = [
   'High grades in the course',
   'Good grades in high school',
@@ -221,7 +344,9 @@ const peerReferralSchema = z.object({
 });
 
 const surveySchema = z.object({
-  full_name: z.string().min(1, 'Full name is required'),
+  first_name: z.string().min(1, 'First name is required'),
+  middle_name: z.string().optional(),
+  last_name: z.string().min(1, 'Last name is required'),
   permanent_address: z.string().min(1, 'Permanent address is required'),
   email: z.string().email('Valid email is required'),
   telephone: z.string().optional(),
@@ -265,6 +390,47 @@ const surveySchema = z.object({
 
 type SurveyFormData = z.infer<typeof surveySchema>;
 
+const SURVEY_DEFAULTS: SurveyFormData = {
+  first_name: '',
+  middle_name: '',
+  last_name: '',
+  permanent_address: '',
+  email: '',
+  telephone: '',
+  mobile_number: '',
+  civil_status: '',
+  sex: '',
+  date_of_birth: null,
+  region_of_origin: '',
+  province: '',
+  location_of_residence: '',
+  degrees: [],
+  prof_exams: [],
+  course_reasons: [],
+  trainings: [],
+  advanced_studies_reason: '',
+  presently_employed: '',
+  reasons_not_employed: [],
+  employment_status: '',
+  self_employed_skills: '',
+  present_occupation: '',
+  major_line_of_business: '',
+  place_of_work: '',
+  first_job_after_college: '',
+  reasons_for_staying: [],
+  reasons_for_changing: [],
+  how_long_first_job: '',
+  how_found_first_job: '',
+  how_long_to_land_first_job: '',
+  job_level_first: '',
+  job_level_current: '',
+  initial_gross_monthly_earning: '',
+  curriculum_relevant: '',
+  useful_competencies: [],
+  suggestions_to_improve: '',
+  peer_referrals: [],
+};
+
 // ==================== HELPERS ====================
 
 function CheckboxGroup({
@@ -273,14 +439,15 @@ function CheckboxGroup({
   onChange,
 }: {
   options: string[];
-  value: string[];
+  value: string[] | undefined;
   onChange: (val: string[]) => void;
 }) {
+  const safeValue = value || [];
   const toggle = (option: string) => {
-    if (value.includes(option)) {
-      onChange(value.filter((v) => v !== option));
+    if (safeValue.includes(option)) {
+      onChange(safeValue.filter((v) => v !== option));
     } else {
-      onChange([...value, option]);
+      onChange([...safeValue, option]);
     }
   };
 
@@ -288,7 +455,7 @@ function CheckboxGroup({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {options.map((option) => (
         <div key={option} className="flex items-start space-x-2">
-          <Checkbox id={option} checked={value.includes(option)} onCheckedChange={() => toggle(option)} />
+          <Checkbox id={option} checked={safeValue.includes(option)} onCheckedChange={() => toggle(option)} />
           <Label htmlFor={option} className="text-sm font-normal leading-tight cursor-pointer">
             {option}
           </Label>
@@ -328,47 +495,78 @@ function StepHeader({ number, title, description }: { number: number; title: str
         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
           {number}
         </div>
-        <h2 className="text-xl font-semibold text-forest">{title}</h2>
+        <h2 className="text-xl font-semibold text-card-foreground">{title}</h2>
       </div>
-      {description && <p className="text-sm text-slate ml-11">{description}</p>}
+      {description && <p className="text-sm text-muted-foreground ml-11">{description}</p>}
     </div>
   );
 }
 
 // ==================== STEP 1: GENERAL INFORMATION ====================
 
+function RequiredLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <FormLabel>
+      {children}
+      <span className="text-destructive ml-0.5">*</span>
+    </FormLabel>
+  );
+}
+
 function Step1GeneralInfo() {
-  const { control, formState } = useFormContext<SurveyFormData>();
+  const { control, setValue, watch } = useFormContext<SurveyFormData>();
+  const selectedProvince = watch('province');
+
+  // Auto-select region when province changes
+  React.useEffect(() => {
+    if (selectedProvince) {
+      const region = getRegionForProvince(selectedProvince);
+      if (region) {
+        setValue('region_of_origin', region, { shouldValidate: true });
+      }
+    }
+  }, [selectedProvince, setValue]);
 
   return (
     <div className="space-y-6">
       <StepHeader number={1} title="General Information" description="Personal and contact details" />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
         <FormField
           control={control}
-          name="full_name"
+          name="first_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Full Name</FormLabel>
+              <RequiredLabel>First Name</RequiredLabel>
               <FormControl>
-                <Input placeholder="Juan Dela Cruz" {...field} />
+                <Input placeholder="Juan" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-
         <FormField
           control={control}
-          name="email"
+          name="middle_name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Middle Name</FormLabel>
               <FormControl>
-                <Input type="email" readOnly {...field} className="bg-muted" />
+                <Input placeholder="Reyes" {...field} />
               </FormControl>
-              <FormDescription>Pre-filled from your profile</FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={control}
+          name="last_name"
+          render={({ field }) => (
+            <FormItem>
+              <RequiredLabel>Last Name</RequiredLabel>
+              <FormControl>
+                <Input placeholder="Dela Cruz" {...field} />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -377,10 +575,25 @@ function Step1GeneralInfo() {
 
       <FormField
         control={control}
+        name="email"
+        render={({ field }) => (
+          <FormItem>
+            <RequiredLabel>Email</RequiredLabel>
+            <FormControl>
+              <Input type="email" readOnly {...field} className="bg-muted" />
+            </FormControl>
+            <FormDescription>Pre-filled from your profile</FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
         name="permanent_address"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Permanent Address</FormLabel>
+            <RequiredLabel>Permanent Address</RequiredLabel>
             <FormControl>
               <Textarea placeholder="Complete address" {...field} />
             </FormControl>
@@ -389,7 +602,7 @@ function Step1GeneralInfo() {
         )}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         <FormField
           control={control}
           name="telephone"
@@ -409,7 +622,7 @@ function Step1GeneralInfo() {
           name="mobile_number"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Mobile Number</FormLabel>
+              <RequiredLabel>Mobile Number</RequiredLabel>
               <FormControl>
                 <Input placeholder="0917 123 4567" {...field} />
               </FormControl>
@@ -419,13 +632,13 @@ function Step1GeneralInfo() {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         <FormField
           control={control}
           name="civil_status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Civil Status</FormLabel>
+              <RequiredLabel>Civil Status</RequiredLabel>
               <FormControl>
                 <RadioOptionGroup
                   options={['Single', 'Married', 'Separated', 'Single Parent', 'Widowed']}
@@ -443,7 +656,7 @@ function Step1GeneralInfo() {
           name="sex"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Sex</FormLabel>
+              <RequiredLabel>Sex</RequiredLabel>
               <FormControl>
                 <RadioOptionGroup options={['Male', 'Female']} value={field.value} onChange={field.onChange} />
               </FormControl>
@@ -453,13 +666,13 @@ function Step1GeneralInfo() {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         <FormField
           control={control}
           name="date_of_birth"
           render={({ field }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Date of Birth</FormLabel>
+              <RequiredLabel>Date of Birth</RequiredLabel>
               <Popover>
                 <PopoverTrigger asChild>
                   <FormControl>
@@ -491,9 +704,9 @@ function Step1GeneralInfo() {
           control={control}
           name="region_of_origin"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Region of Origin</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormItem className="flex flex-col">
+              <RequiredLabel>Region of Origin</RequiredLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select region" />
@@ -513,16 +726,27 @@ function Step1GeneralInfo() {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
         <FormField
           control={control}
           name="province"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Province</FormLabel>
-              <FormControl>
-                <Input placeholder="Bulacan" {...field} />
-              </FormControl>
+            <FormItem className="flex flex-col">
+              <RequiredLabel>Province</RequiredLabel>
+              <Select onValueChange={field.onChange} value={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select province" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent className="max-h-[300px]">
+                  {PROVINCE_NAMES.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      {p}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -533,7 +757,7 @@ function Step1GeneralInfo() {
           name="location_of_residence"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Location of Residence</FormLabel>
+              <RequiredLabel>Location of Residence</RequiredLabel>
               <FormControl>
                 <RadioOptionGroup options={['City', 'Municipality']} value={field.value} onChange={field.onChange} />
               </FormControl>
@@ -568,7 +792,7 @@ function Step2EducationalBackground() {
       {/* Degrees */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-forest uppercase tracking-wide">Degree(s) & Specialization</h3>
+          <h3 className="text-sm font-semibold text-card-foreground uppercase tracking-wide">Degree(s) & Specialization</h3>
           <Button
             type="button"
             variant="outline"
@@ -590,7 +814,7 @@ function Step2EducationalBackground() {
           <Card key={field.id} className="border-mist">
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate">Degree #{index + 1}</span>
+                <span className="text-xs font-medium text-muted-foreground">Degree #{index + 1}</span>
                 <Button type="button" variant="ghost" size="sm" className="text-destructive h-8 px-2" onClick={() => removeDegree(index)}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   Remove
@@ -662,7 +886,7 @@ function Step2EducationalBackground() {
       {/* Professional Exams */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-forest uppercase tracking-wide">Professional Examination(s)</h3>
+          <h3 className="text-sm font-semibold text-card-foreground uppercase tracking-wide">Professional Examination(s)</h3>
           <Button
             type="button"
             variant="outline"
@@ -675,14 +899,14 @@ function Step2EducationalBackground() {
         </div>
 
         {examFields.length === 0 && (
-          <p className="text-sm text-slate italic">No professional examinations added. Click "Add Exam" if applicable.</p>
+          <p className="text-sm text-muted-foreground italic">No professional examinations added. Click "Add Exam" if applicable.</p>
         )}
 
         {examFields.map((field, index) => (
           <Card key={field.id} className="border-mist">
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate">Exam #{index + 1}</span>
+                <span className="text-xs font-medium text-muted-foreground">Exam #{index + 1}</span>
                 <Button type="button" variant="ghost" size="sm" className="text-destructive h-8 px-2" onClick={() => removeExam(index)}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   Remove
@@ -738,7 +962,7 @@ function Step2EducationalBackground() {
 
       {/* Course Reasons */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-forest uppercase tracking-wide">Reason(s) for Taking the Course</h3>
+        <h3 className="text-sm font-semibold text-card-foreground uppercase tracking-wide">Reason(s) for Taking the Course</h3>
         <FormField
           control={control}
           name="course_reasons"
@@ -773,7 +997,7 @@ function Step3Trainings() {
       {/* Trainings */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-forest uppercase tracking-wide">Training(s) / Seminar(s) Attended</h3>
+          <h3 className="text-sm font-semibold text-card-foreground uppercase tracking-wide">Training(s) / Seminar(s) Attended</h3>
           <Button
             type="button"
             variant="outline"
@@ -786,14 +1010,14 @@ function Step3Trainings() {
         </div>
 
         {trainingFields.length === 0 && (
-          <p className="text-sm text-slate italic">No trainings added. Click "Add Training" if applicable.</p>
+          <p className="text-sm text-muted-foreground italic">No trainings added. Click "Add Training" if applicable.</p>
         )}
 
         {trainingFields.map((field, index) => (
           <Card key={field.id} className="border-mist">
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate">Training #{index + 1}</span>
+                <span className="text-xs font-medium text-muted-foreground">Training #{index + 1}</span>
                 <Button type="button" variant="ghost" size="sm" className="text-destructive h-8 px-2" onClick={() => removeTraining(index)}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   Remove
@@ -849,7 +1073,7 @@ function Step3Trainings() {
 
       {/* Advanced Studies Reason */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-forest uppercase tracking-wide">Reason for Pursuing Advanced Studies (if any)</h3>
+        <h3 className="text-sm font-semibold text-card-foreground uppercase tracking-wide">Reason for Pursuing Advanced Studies (if any)</h3>
         <FormField
           control={control}
           name="advanced_studies_reason"
@@ -1270,7 +1494,7 @@ function Step5SkillsFeedback() {
       {/* Peer Referrals */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-forest uppercase tracking-wide">Peer Referrals</h3>
+          <h3 className="text-sm font-semibold text-card-foreground uppercase tracking-wide">Peer Referrals</h3>
           <Button
             type="button"
             variant="outline"
@@ -1283,14 +1507,14 @@ function Step5SkillsFeedback() {
         </div>
 
         {referralFields.length === 0 && (
-          <p className="text-sm text-slate italic">No referrals added. Click "Add Referral" if you wish to refer peers.</p>
+          <p className="text-sm text-muted-foreground italic">No referrals added. Click "Add Referral" if you wish to refer peers.</p>
         )}
 
         {referralFields.map((field, index) => (
           <Card key={field.id} className="border-mist">
             <CardContent className="p-4 space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate">Referral #{index + 1}</span>
+                <span className="text-xs font-medium text-muted-foreground">Referral #{index + 1}</span>
                 <Button type="button" variant="ghost" size="sm" className="text-destructive h-8 px-2" onClick={() => removeReferral(index)}>
                   <Trash2 className="h-4 w-4 mr-1" />
                   Remove
@@ -1352,9 +1576,9 @@ function ReviewScreen({ onEdit }: { onEdit: (step: number) => void }) {
   const data = getValues();
 
   const renderValue = (val: unknown) => {
-    if (val === undefined || val === null || val === '') return <span className="text-slate italic">Not provided</span>;
+    if (val === undefined || val === null || val === '') return <span className="text-muted-foreground italic">Not provided</span>;
     if (Array.isArray(val)) {
-      if (val.length === 0) return <span className="text-slate italic">None</span>;
+      if (val.length === 0) return <span className="text-muted-foreground italic">None</span>;
       return (
         <ul className="list-disc list-inside text-sm">
           {val.map((item, i) => (
@@ -1382,17 +1606,17 @@ function ReviewScreen({ onEdit }: { onEdit: (step: number) => void }) {
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            <div><span className="text-slate">Full Name:</span> {renderValue(data.full_name)}</div>
-            <div><span className="text-slate">Email:</span> {renderValue(data.email)}</div>
-            <div className="md:col-span-2"><span className="text-slate">Address:</span> {renderValue(data.permanent_address)}</div>
-            <div><span className="text-slate">Telephone:</span> {renderValue(data.telephone)}</div>
-            <div><span className="text-slate">Mobile:</span> {renderValue(data.mobile_number)}</div>
-            <div><span className="text-slate">Civil Status:</span> {renderValue(data.civil_status)}</div>
-            <div><span className="text-slate">Sex:</span> {renderValue(data.sex)}</div>
-            <div><span className="text-slate">Date of Birth:</span> {renderValue(data.date_of_birth)}</div>
-            <div><span className="text-slate">Region:</span> {renderValue(data.region_of_origin)}</div>
-            <div><span className="text-slate">Province:</span> {renderValue(data.province)}</div>
-            <div><span className="text-slate">Residence:</span> {renderValue(data.location_of_residence)}</div>
+            <div><span className="text-muted-foreground">Name:</span> {renderValue([data.first_name, data.middle_name, data.last_name].filter(Boolean).join(' '))}</div>
+            <div><span className="text-muted-foreground">Email:</span> {renderValue(data.email)}</div>
+            <div className="md:col-span-2"><span className="text-muted-foreground">Address:</span> {renderValue(data.permanent_address)}</div>
+            <div><span className="text-muted-foreground">Telephone:</span> {renderValue(data.telephone)}</div>
+            <div><span className="text-muted-foreground">Mobile:</span> {renderValue(data.mobile_number)}</div>
+            <div><span className="text-muted-foreground">Civil Status:</span> {renderValue(data.civil_status)}</div>
+            <div><span className="text-muted-foreground">Sex:</span> {renderValue(data.sex)}</div>
+            <div><span className="text-muted-foreground">Date of Birth:</span> {renderValue(data.date_of_birth)}</div>
+            <div><span className="text-muted-foreground">Region:</span> {renderValue(data.region_of_origin)}</div>
+            <div><span className="text-muted-foreground">Province:</span> {renderValue(data.province)}</div>
+            <div><span className="text-muted-foreground">Residence:</span> {renderValue(data.location_of_residence)}</div>
           </div>
         </CardContent>
       </Card>
@@ -1408,24 +1632,24 @@ function ReviewScreen({ onEdit }: { onEdit: (step: number) => void }) {
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div>
-            <span className="text-slate font-medium">Degrees:</span>
-            {data.degrees.map((d, i) => (
+            <span className="text-muted-foreground font-medium">Degrees:</span>
+            {(data.degrees || []).map((d, i) => (
               <div key={i} className="ml-4 mt-1 p-2 bg-muted rounded">
                 <div>{d.degree_and_specialization} — {d.college_university} ({d.year_graduated})</div>
-                {d.honors_awards && <div className="text-slate">Honors: {d.honors_awards}</div>}
+                {d.honors_awards && <div className="text-muted-foreground">Honors: {d.honors_awards}</div>}
               </div>
             ))}
           </div>
-          {data.prof_exams.length > 0 && (
+          {(data.prof_exams || []).length > 0 && (
             <div>
-              <span className="text-slate font-medium">Professional Exams:</span>
-              {data.prof_exams.map((e, i) => (
+              <span className="text-muted-foreground font-medium">Professional Exams:</span>
+              {(data.prof_exams || []).map((e, i) => (
                 <div key={i} className="ml-4 mt-1">{e.name_of_examination} — {e.date_taken} — {e.rating}</div>
               ))}
             </div>
           )}
           <div>
-            <span className="text-slate font-medium">Reasons for Taking Course:</span>
+            <span className="text-muted-foreground font-medium">Reasons for Taking Course:</span>
             <div className="ml-4">{renderValue(data.course_reasons)}</div>
           </div>
         </CardContent>
@@ -1441,15 +1665,15 @@ function ReviewScreen({ onEdit }: { onEdit: (step: number) => void }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          {data.trainings.length > 0 ? (
-            data.trainings.map((t, i) => (
+          {(data.trainings || []).length > 0 ? (
+            (data.trainings || []).map((t, i) => (
               <div key={i} className="ml-4">{t.title} — {t.duration_credits} — {t.institution}</div>
             ))
           ) : (
-            <span className="text-slate italic">No trainings recorded</span>
+            <span className="text-muted-foreground italic">No trainings recorded</span>
           )}
           {data.advanced_studies_reason && (
-            <div><span className="text-slate">Reason for Advanced Studies:</span> {data.advanced_studies_reason}</div>
+            <div><span className="text-muted-foreground">Reason for Advanced Studies:</span> {data.advanced_studies_reason}</div>
           )}
         </CardContent>
       </Card>
@@ -1464,30 +1688,30 @@ function ReviewScreen({ onEdit }: { onEdit: (step: number) => void }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <div><span className="text-slate">Presently Employed:</span> {renderValue(data.presently_employed)}</div>
+          <div><span className="text-muted-foreground">Presently Employed:</span> {renderValue(data.presently_employed)}</div>
           {data.presently_employed !== 'Yes' && data.presently_employed ? (
-            <div><span className="text-slate">Reasons Not Employed:</span> {renderValue(data.reasons_not_employed)}</div>
+            <div><span className="text-muted-foreground">Reasons Not Employed:</span> {renderValue(data.reasons_not_employed)}</div>
           ) : data.presently_employed === 'Yes' ? (
             <>
-              <div><span className="text-slate">Employment Status:</span> {renderValue(data.employment_status)}</div>
-              {data.self_employed_skills && <div><span className="text-slate">Self-employed Skills:</span> {renderValue(data.self_employed_skills)}</div>}
-              <div><span className="text-slate">Present Occupation:</span> {renderValue(data.present_occupation)}</div>
-              <div><span className="text-slate">Line of Business:</span> {renderValue(data.major_line_of_business)}</div>
-              <div><span className="text-slate">Place of Work:</span> {renderValue(data.place_of_work)}</div>
-              <div><span className="text-slate">First Job After College:</span> {renderValue(data.first_job_after_college)}</div>
+              <div><span className="text-muted-foreground">Employment Status:</span> {renderValue(data.employment_status)}</div>
+              {data.self_employed_skills && <div><span className="text-muted-foreground">Self-employed Skills:</span> {renderValue(data.self_employed_skills)}</div>}
+              <div><span className="text-muted-foreground">Present Occupation:</span> {renderValue(data.present_occupation)}</div>
+              <div><span className="text-muted-foreground">Line of Business:</span> {renderValue(data.major_line_of_business)}</div>
+              <div><span className="text-muted-foreground">Place of Work:</span> {renderValue(data.place_of_work)}</div>
+              <div><span className="text-muted-foreground">First Job After College:</span> {renderValue(data.first_job_after_college)}</div>
               {data.first_job_after_college === 'Yes' && (
-                <div><span className="text-slate">Reasons for Staying:</span> {renderValue(data.reasons_for_staying)}</div>
+                <div><span className="text-muted-foreground">Reasons for Staying:</span> {renderValue(data.reasons_for_staying)}</div>
               )}
               {data.first_job_after_college === 'No' && (
-                <div><span className="text-slate">Reasons for Changing:</span> {renderValue(data.reasons_for_changing)}</div>
+                <div><span className="text-muted-foreground">Reasons for Changing:</span> {renderValue(data.reasons_for_changing)}</div>
               )}
-              <div><span className="text-slate">How Long in First Job:</span> {renderValue(data.how_long_first_job)}</div>
-              <div><span className="text-slate">How Found First Job:</span> {renderValue(data.how_found_first_job)}</div>
-              <div><span className="text-slate">How Long to Land First Job:</span> {renderValue(data.how_long_to_land_first_job)}</div>
-              <div><span className="text-slate">Job Level (First):</span> {renderValue(data.job_level_first)}</div>
-              <div><span className="text-slate">Job Level (Current):</span> {renderValue(data.job_level_current)}</div>
-              <div><span className="text-slate">Initial Gross Monthly Earning:</span> {renderValue(data.initial_gross_monthly_earning)}</div>
-              <div><span className="text-slate">Curriculum Relevant:</span> {renderValue(data.curriculum_relevant)}</div>
+              <div><span className="text-muted-foreground">How Long in First Job:</span> {renderValue(data.how_long_first_job)}</div>
+              <div><span className="text-muted-foreground">How Found First Job:</span> {renderValue(data.how_found_first_job)}</div>
+              <div><span className="text-muted-foreground">How Long to Land First Job:</span> {renderValue(data.how_long_to_land_first_job)}</div>
+              <div><span className="text-muted-foreground">Job Level (First):</span> {renderValue(data.job_level_first)}</div>
+              <div><span className="text-muted-foreground">Job Level (Current):</span> {renderValue(data.job_level_current)}</div>
+              <div><span className="text-muted-foreground">Initial Gross Monthly Earning:</span> {renderValue(data.initial_gross_monthly_earning)}</div>
+              <div><span className="text-muted-foreground">Curriculum Relevant:</span> {renderValue(data.curriculum_relevant)}</div>
             </>
           ) : null}
         </CardContent>
@@ -1504,13 +1728,13 @@ function ReviewScreen({ onEdit }: { onEdit: (step: number) => void }) {
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           {data.curriculum_relevant === 'Yes' && (
-            <div><span className="text-slate">Useful Competencies:</span> {renderValue(data.useful_competencies)}</div>
+            <div><span className="text-muted-foreground">Useful Competencies:</span> {renderValue(data.useful_competencies)}</div>
           )}
-          <div><span className="text-slate">Suggestions:</span> {renderValue(data.suggestions_to_improve)}</div>
-          {data.peer_referrals.length > 0 && (
+          <div><span className="text-muted-foreground">Suggestions:</span> {renderValue(data.suggestions_to_improve)}</div>
+          {(data.peer_referrals || []).length > 0 && (
             <div>
-              <span className="text-slate">Peer Referrals:</span>
-              {data.peer_referrals.map((r, i) => (
+              <span className="text-muted-foreground">Peer Referrals:</span>
+              {(data.peer_referrals || []).map((r, i) => (
                 <div key={i} className="ml-4 mt-1">{r.name} — {r.address} — {r.contact}</div>
               ))}
             </div>
@@ -1530,8 +1754,8 @@ function SuccessScreen() {
         <CheckCircle2 className="h-10 w-10 text-success" />
       </div>
       <div className="space-y-2">
-        <h2 className="text-2xl font-bold text-forest">Submission Successful!</h2>
-        <p className="text-slate max-w-md mx-auto">
+        <h2 className="text-2xl font-bold text-card-foreground">Submission Successful!</h2>
+        <p className="text-muted-foreground max-w-md mx-auto">
           Thank you for completing the CHED Graduate Tracer Study. Your responses have been recorded and will help improve
           our academic programs.
         </p>
@@ -1564,44 +1788,7 @@ export default function SurveyPage() {
   const form = useForm<SurveyFormData>({
     resolver: zodResolver(surveySchema),
     mode: 'onSubmit',
-    defaultValues: {
-      full_name: '',
-      permanent_address: '',
-      email: '',
-      telephone: '',
-      mobile_number: '',
-      civil_status: '',
-      sex: '',
-      date_of_birth: null,
-      region_of_origin: '',
-      province: '',
-      location_of_residence: '',
-      degrees: [],
-      prof_exams: [],
-      course_reasons: [],
-      trainings: [],
-      advanced_studies_reason: '',
-      presently_employed: '',
-      reasons_not_employed: [],
-      employment_status: '',
-      self_employed_skills: '',
-      present_occupation: '',
-      major_line_of_business: '',
-      place_of_work: '',
-      first_job_after_college: '',
-      reasons_for_staying: [],
-      reasons_for_changing: [],
-      how_long_first_job: '',
-      how_found_first_job: '',
-      how_long_to_land_first_job: '',
-      job_level_first: '',
-      job_level_current: '',
-      initial_gross_monthly_earning: '',
-      curriculum_relevant: '',
-      useful_competencies: [],
-      suggestions_to_improve: '',
-      peer_referrals: [],
-    },
+    defaultValues: SURVEY_DEFAULTS,
   });
 
   const { trigger, setError, clearErrors, getValues, setValue, reset } = form;
@@ -1612,8 +1799,9 @@ export default function SurveyPage() {
     async function init() {
       const supabase = createClient();
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
       if (!user) {
         setIsLoading(false);
         return;
@@ -1636,8 +1824,11 @@ export default function SurveyPage() {
 
       if (cancelled) return;
 
-      const defaults: Partial<SurveyFormData> = {
-        full_name: profile?.full_name || '',
+      const defaults: SurveyFormData = {
+        ...SURVEY_DEFAULTS,
+        first_name: profile?.first_name || '',
+        middle_name: profile?.middle_name || '',
+        last_name: profile?.last_name || '',
         email: user.email || '',
       };
 
@@ -1653,7 +1844,9 @@ export default function SurveyPage() {
 
         if (sectionA) {
           Object.assign(defaults, {
-            full_name: sectionA.full_name || defaults.full_name,
+            first_name: sectionA.first_name || defaults.first_name,
+            middle_name: sectionA.middle_name || defaults.middle_name,
+            last_name: sectionA.last_name || defaults.last_name,
             permanent_address: sectionA.permanent_address || '',
             email: sectionA.email || defaults.email,
             telephone: sectionA.telephone || '',
@@ -1748,7 +1941,7 @@ export default function SurveyPage() {
       }
 
       if (cancelled) return;
-      reset(defaults as SurveyFormData);
+      reset(defaults);
       setIsLoading(false);
     }
 
@@ -1764,7 +1957,8 @@ export default function SurveyPage() {
 
       if (step === 0) {
         const ok = await trigger([
-          'full_name',
+          'first_name',
+          'last_name',
           'permanent_address',
           'email',
           'mobile_number',
@@ -1799,7 +1993,7 @@ export default function SurveyPage() {
         }
 
         if (data.presently_employed === 'No' || data.presently_employed === 'Never Been Employed') {
-          if (data.reasons_not_employed.length === 0) {
+          if ((data.reasons_not_employed || []).length === 0) {
             setError('reasons_not_employed', { type: 'manual', message: 'Select at least one reason' });
             return false;
           }
@@ -1833,11 +2027,11 @@ export default function SurveyPage() {
         const empOk = await trigger(employedFields);
         if (!empOk) return false;
 
-        if (data.first_job_after_college === 'Yes' && data.reasons_for_staying.length === 0) {
+        if (data.first_job_after_college === 'Yes' && (data.reasons_for_staying || []).length === 0) {
           setError('reasons_for_staying', { type: 'manual', message: 'Select at least one reason' });
           return false;
         }
-        if (data.first_job_after_college === 'No' && data.reasons_for_changing.length === 0) {
+        if (data.first_job_after_college === 'No' && (data.reasons_for_changing || []).length === 0) {
           setError('reasons_for_changing', { type: 'manual', message: 'Select at least one reason' });
           return false;
         }
@@ -1886,7 +2080,9 @@ export default function SurveyPage() {
       await supabase.from('gts_section_a').upsert(
         {
           response_id: newRid,
-          full_name: data.full_name,
+          first_name: data.first_name,
+          middle_name: data.middle_name || null,
+          last_name: data.last_name,
           permanent_address: data.permanent_address,
           email: data.email,
           telephone: data.telephone || null,
@@ -1903,9 +2099,9 @@ export default function SurveyPage() {
 
       // Replace degrees
       await supabase.from('gts_degrees').delete().eq('response_id', newRid);
-      if (data.degrees.length > 0) {
+      if ((data.degrees || []).length > 0) {
         await supabase.from('gts_degrees').insert(
-          data.degrees.map((d) => ({
+          (data.degrees || []).map((d) => ({
             response_id: newRid,
             degree_and_specialization: d.degree_and_specialization,
             college_university: d.college_university,
@@ -1917,9 +2113,9 @@ export default function SurveyPage() {
 
       // Replace prof exams
       await supabase.from('gts_prof_exams').delete().eq('response_id', newRid);
-      if (data.prof_exams.length > 0) {
+      if ((data.prof_exams || []).length > 0) {
         await supabase.from('gts_prof_exams').insert(
-          data.prof_exams.map((e) => ({
+          (data.prof_exams || []).map((e) => ({
             response_id: newRid,
             name_of_examination: e.name_of_examination,
             date_taken: e.date_taken,
@@ -1930,9 +2126,9 @@ export default function SurveyPage() {
 
       // Replace course reasons
       await supabase.from('gts_course_reasons').delete().eq('response_id', newRid);
-      if (data.course_reasons.length > 0) {
+      if ((data.course_reasons || []).length > 0) {
         await supabase.from('gts_course_reasons').insert(
-          data.course_reasons.map((r) => ({
+          (data.course_reasons || []).map((r) => ({
             response_id: newRid,
             reason: r,
           }))
@@ -1941,9 +2137,9 @@ export default function SurveyPage() {
 
       // Replace trainings
       await supabase.from('gts_trainings').delete().eq('response_id', newRid);
-      if (data.trainings.length > 0) {
+      if ((data.trainings || []).length > 0) {
         await supabase.from('gts_trainings').insert(
-          data.trainings.map((t) => ({
+          (data.trainings || []).map((t) => ({
             response_id: newRid,
             title: t.title,
             duration_credits: t.duration_credits,
@@ -2086,18 +2282,18 @@ export default function SurveyPage() {
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-6xl mx-auto space-y-6 pt-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-forest">CHED Graduate Tracer Study</h1>
-          <p className="text-sm text-slate">
+          <h1 className="text-2xl font-bold text-card-foreground">CHED Graduate Tracer Study</h1>
+          <p className="text-sm text-muted-foreground">
             Please complete all sections of this survey. Your responses help improve our programs.
           </p>
         </div>
 
         {/* Progress */}
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-xs text-slate">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>Progress</span>
             <span>{Math.round(progressPercent)}%</span>
           </div>
@@ -2119,8 +2315,8 @@ export default function SurveyPage() {
                     isActive
                       ? 'bg-primary text-white'
                       : isDone
-                      ? 'bg-mint text-forest'
-                      : 'bg-fog text-slate'
+                      ? 'bg-primary/15 dark:bg-primary/25 text-primary'
+                      : 'bg-muted text-muted-foreground'
                   )}
                 >
                   <StepIcon className="h-3.5 w-3.5" />
@@ -2168,7 +2364,7 @@ export default function SurveyPage() {
 
               <div className="flex items-center gap-3">
                 {isSaving && (
-                  <span className="text-xs text-slate flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     Saving draft...
                   </span>

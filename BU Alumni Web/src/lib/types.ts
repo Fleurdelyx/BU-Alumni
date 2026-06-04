@@ -1,6 +1,10 @@
 export type Profile = {
   id: string;
-  full_name: string;
+  first_name: string;
+  middle_name: string | null;
+  last_name: string;
+  display_name: string;
+  full_name: string; // generated — backward compatibility during v3 transition
   avatar_url: string | null;
   role: 'alumni' | 'admin' | 'moderator';
   bio: string | null;
@@ -56,11 +60,14 @@ export type ForumThread = {
   is_pinned: boolean;
   is_locked: boolean;
   is_solved: boolean;
+  is_deleted: boolean;
   view_count: number;
   reply_count: number;
   last_reply_at: string | null;
   last_reply_by: string | null;
   tags: string[];
+  upvotes: number;
+  downvotes: number;
   created_at: string;
   updated_at: string;
   author?: Profile;
@@ -77,6 +84,8 @@ export type ForumReply = {
   is_accepted: boolean;
   is_deleted: boolean;
   edit_count: number;
+  upvotes: number;
+  downvotes: number;
   created_at: string;
   updated_at: string;
   author?: Profile;

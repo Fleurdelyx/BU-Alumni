@@ -22,8 +22,9 @@ export default function NotificationsPage() {
 
     async function load() {
       const {
-        data: { user },
-      } = await supabase.auth.getUser();
+        data: { session },
+      } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
       if (!user) {
         setLoading(false);
         return;
@@ -125,7 +126,7 @@ export default function NotificationsPage() {
       <div className="space-y-6 max-w-3xl">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold font-display text-forest">
+            <h1 className="text-3xl font-bold font-display text-forest dark:text-sidebar-foreground">
               Notifications
             </h1>
             <p className="text-muted-foreground mt-1">

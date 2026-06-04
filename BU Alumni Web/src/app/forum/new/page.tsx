@@ -9,11 +9,13 @@ import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { RichEditor } from '@/components/forum/rich-editor';
+import { RenderBody } from '@/components/forum/render-body';
 import { getForumIcon } from '@/lib/forum-icons';
 import type { ForumCategory } from '@/lib/types';
 import { Loader2, Eye, EyeOff, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 function NewThreadContent() {
   const router = useRouter();
@@ -25,15 +27,17 @@ function NewThreadContent() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [bodyPlain, setBodyPlain] = useState('');
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUserId(user?.id || null);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id || null);
     });
     supabase
       .from('forum_categories')
@@ -63,26 +67,55 @@ function NewThreadContent() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedCategory || !title.trim() || !body.trim() || !userId) return;
+    if (!selectedCategory || !title.trim() || !bodyPlain.trim() || !userId) {
+      toast({ title: 'Please fill in all required fields', variant: 'destructive' });
+      return;
+    }
     setSubmitting(true);
 
-    const { data: slug } = await supabase.rpc('generate_thread_slug', { title: title.trim() });
+    try {
+      const sanitizeSlug = (str: string) =>
+        str.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').substring(0, 100);
 
-    const { error } = await supabase.from('forum_threads').insert({
-      category_id: selectedCategory,
-      author_id: userId,
-      title: title.trim(),
-      slug: slug || title.trim().toLowerCase().replace(/\s+/g, '-'),
-      body: body.trim(),
-      body_plain: body.trim(),
-      tags,
-    });
+      let slug: string;
+      const { data: slugData, error: slugError } = await supabase.rpc('generate_thread_slug', { title: title.trim() });
+      if (!slugError && slugData) {
+        slug = slugData;
+      } else {
+        if (slugError) console.warn('generate_thread_slug RPC failed, using fallback:', slugError);
+        slug = sanitizeSlug(title);
+      }
 
-    setSubmitting(false);
-    if (!error) {
+      const { data: newThread, error } = await supabase
+        .from('forum_threads')
+        .insert({
+          category_id: selectedCategory,
+          author_id: userId,
+          title: title.trim(),
+          slug,
+          body: body.trim(),
+          body_plain: bodyPlain.trim(),
+          tags,
+          is_deleted: false,
+        })
+        .select('id')
+        .single();
+
+      if (error || !newThread) {
+        console.error('Insert error:', error);
+        toast({ title: 'Failed to publish thread', description: error?.message || 'Please try again.', variant: 'destructive' });
+        setSubmitting(false);
+        return;
+      }
+
       const cat = categories.find((c) => c.id === selectedCategory);
-      router.push(`/forum/${cat?.slug || ''}`);
+      toast({ title: 'Thread published successfully!' });
+      router.push(`/forum/${cat?.slug || 'general'}/${newThread.id}`);
       router.refresh();
+    } catch (err: any) {
+      console.error('Failed to create thread:', err);
+      toast({ title: 'Failed to publish thread', description: err?.message || 'Please try again.', variant: 'destructive' });
+      setSubmitting(false);
     }
   };
 
@@ -91,7 +124,7 @@ function NewThreadContent() {
       <div className="space-y-6 max-w-3xl mx-auto">
         <div>
           <h1 className="text-2xl font-bold font-display">Start a New Discussion</h1>
-          <p className="text-slate mt-1">Choose a category and share your thoughts with the community.</p>
+          <p className="text-muted-foreground mt-1">Choose a category and share your thoughts with the community.</p>
         </div>
 
         <div className="space-y-4">
@@ -104,7 +137,7 @@ function NewThreadContent() {
                 <Card
                   key={cat.id}
                   className={`cursor-pointer transition-all ${
-                    isSelected ? 'border-primary ring-1 ring-primary' : 'border-mist hover:border-sage'
+                    isSelected ? 'border-primary ring-1 ring-primary' : 'border-mist dark:border-sidebar-border/30 hover:border-sage'
                   }`}
                   onClick={() => setSelectedCategory(cat.id)}
                 >
@@ -119,8 +152,8 @@ function NewThreadContent() {
                       <Icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-forest">{cat.name}</p>
-                      <p className="text-xs text-slate line-clamp-1">{cat.description}</p>
+                      <p className="text-sm font-medium text-card-foreground">{cat.name}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1">{cat.description}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -139,18 +172,21 @@ function NewThreadContent() {
               maxLength={150}
               className="mt-1"
             />
-            <p className="text-xs text-slate mt-1 text-right">{title.length}/150</p>
+            <p className="text-xs text-muted-foreground mt-1 text-right">{title.length}/150</p>
           </div>
 
           <div>
             <label className="text-sm font-medium">Body</label>
-            <Textarea
-              placeholder="Elaborate on your topic..."
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              rows={8}
-              className="mt-1"
-            />
+            <div className="mt-1">
+              <RichEditor
+                content={body}
+                onChange={(html, text) => {
+                  setBody(html);
+                  setBodyPlain(text);
+                }}
+                placeholder="Elaborate on your topic..."
+              />
+            </div>
           </div>
 
           <div>
@@ -183,10 +219,12 @@ function NewThreadContent() {
           </div>
 
           {preview && (
-            <Card className="border-mist bg-paper">
+            <Card className="border-mist dark:border-sidebar-border/30 bg-card">
               <CardContent className="p-5">
                 <h3 className="font-display font-semibold text-lg">{title || 'Untitled'}</h3>
-                <p className="whitespace-pre-wrap mt-2 text-sm">{body}</p>
+                <div className="mt-2 text-sm">
+                  <RenderBody body={body} />
+                </div>
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mt-3">
                     {tags.map((tag) => (
@@ -206,7 +244,7 @@ function NewThreadContent() {
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={!selectedCategory || !title.trim() || !body.trim() || submitting}
+              disabled={!selectedCategory || !title.trim() || !bodyPlain.trim() || submitting}
             >
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Publish

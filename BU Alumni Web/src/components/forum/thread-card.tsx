@@ -2,106 +2,123 @@
 
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
-import { Pin, MessageSquare, Eye } from 'lucide-react';
-import { AuthorBlock } from './author-block';
-import { TagList } from './tag-list';
+import { MessageSquare, ArrowBigUp, ArrowBigDown } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { ForumThread, ForumCategory } from '@/lib/types';
 
 interface ThreadCardProps {
   thread: ForumThread;
   category?: ForumCategory | null;
   categorySlug?: string;
-  reactions?: { emoji: string; count: number }[];
-  showCategory?: boolean;
+  userVote?: 'up' | 'down' | null;
+  onVote?: (threadId: string, voteType: 'up' | 'down') => void;
+}
+
+function timeAgo(date: string) {
+  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+  const intervals: [number, string][] = [
+    [31536000, 'y'],
+    [2592000, 'mo'],
+    [86400, 'd'],
+    [3600, 'h'],
+    [60, 'm'],
+  ];
+  for (const [secs, label] of intervals) {
+    const count = Math.floor(seconds / secs);
+    if (count >= 1) return `${count}${label} ago`;
+  }
+  return 'just now';
+}
+
+function getInitials(name?: string | null) {
+  if (!name) return '?';
+  return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
 }
 
 export function ThreadCard({
   thread,
   category,
   categorySlug,
-  reactions = [],
-  showCategory = false,
+  userVote,
+  onVote,
 }: ThreadCardProps) {
   const catSlug = categorySlug || category?.slug || thread.category?.slug || 'general';
-  const threadSlug = thread.slug || thread.id;
+  const score = (thread.upvotes || 0) - (thread.downvotes || 0);
+  const authorName = thread.author?.full_name || thread.author?.display_name || 'Anonymous';
+
+  const handleVote = (e: React.MouseEvent, type: 'up' | 'down') => {
+    e.preventDefault();
+    e.stopPropagation();
+    onVote?.(thread.id, type);
+  };
 
   return (
-    <Link href={`/forum/${catSlug}/${threadSlug}`}>
-      <Card className="relative overflow-hidden border-mist/50 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 cursor-pointer group">
-        {/* Left accent */}
-        <div
-          className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full transition-colors ${
-            thread.is_pinned
-              ? 'bg-primary'
-              : thread.is_solved
-              ? 'bg-green-500'
-              : 'bg-mist/40 group-hover:bg-primary/40'
-          }`}
-        />
-        <CardContent className="p-4 pl-5">
-          <div className="flex items-start gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                {thread.is_pinned && (
-                  <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded shrink-0">
-                    <Pin className="h-3 w-3" />
-                    Pinned
-                  </span>
-                )}
-                {thread.is_solved && (
-                  <span className="text-xs font-semibold bg-green-50 text-green-700 px-1.5 py-0.5 rounded shrink-0 border border-green-200">
-                    Solved
-                  </span>
-                )}
-                <h3 className="font-display font-semibold text-card-foreground truncate group-hover:text-primary transition-colors">
-                  {thread.title}
-                </h3>
-              </div>
+    <Card className="border-mist/50 dark:border-sidebar-border/30 hover:border-primary/30 transition-colors">
+      <CardContent className="p-0 flex">
+        {/* Vote column */}
+        <div className="flex flex-col items-center gap-0.5 py-3 px-2 bg-muted/30 dark:bg-sidebar-border/10 rounded-l-lg min-w-[48px]">
+          <button
+            onClick={(e) => handleVote(e, 'up')}
+            className={`p-0.5 rounded hover:bg-muted transition-colors ${
+              userVote === 'up' ? 'text-primary' : 'text-muted-foreground'
+            }`}
+          >
+            <ArrowBigUp className="w-6 h-6" />
+          </button>
+          <span className={`text-sm font-bold ${score > 0 ? 'text-primary' : score < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+            {score}
+          </span>
+          <button
+            onClick={(e) => handleVote(e, 'down')}
+            className={`p-0.5 rounded hover:bg-muted transition-colors ${
+              userVote === 'down' ? 'text-destructive' : 'text-muted-foreground'
+            }`}
+          >
+            <ArrowBigDown className="w-6 h-6" />
+          </button>
+        </div>
 
-              <AuthorBlock
-                author={thread.author}
-                createdAt={thread.last_reply_at || thread.created_at}
-                size="sm"
-                showTime
-                meta={
-                  showCategory && category ? (
-                    <span className="text-xs text-muted-foreground">in {category.name}</span>
-                  ) : null
-                }
-              />
-
-              <TagList tags={thread.tags || []} className="mt-2" />
-
-              <div className="flex items-center gap-4 mt-2">
-                <span className="flex items-center gap-1 text-xs text-slate">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  {thread.reply_count || 0}
-                </span>
-                <span className="flex items-center gap-1 text-xs text-slate">
-                  <Eye className="h-3.5 w-3.5" />
-                  {thread.view_count || 0}
-                </span>
-                {reactions.length > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    {reactions.slice(0, 3).map((r, idx) => (
-                      <span
-                        key={idx}
-                        className="flex items-center gap-0.5 text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded shadow-sm"
-                      >
-                        <span>{r.emoji}</span>
-                        <span>{r.count}</span>
-                      </span>
-                    ))}
-                    {reactions.length > 3 && (
-                      <span className="text-xs text-muted-foreground">+{reactions.length - 3}</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+        {/* Content */}
+        <Link href={`/forum/${catSlug}/${thread.id}`} className="flex-1 min-w-0 p-3 block">
+          <div className="flex items-center gap-2 mb-1">
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={thread.author?.avatar_url || ''} />
+              <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                {getInitials(authorName)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-xs font-medium text-primary">{authorName}</span>
+            <span className="text-xs text-muted-foreground">·</span>
+            <span className="text-xs text-muted-foreground">{timeAgo(thread.created_at)}</span>
+            {category && (
+              <>
+                <span className="text-xs text-muted-foreground">·</span>
+                <span className="text-xs text-muted-foreground">{category.name}</span>
+              </>
+            )}
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+
+          <h3 className="font-semibold text-card-foreground leading-snug mb-1 group-hover:text-primary transition-colors">
+            {thread.title}
+          </h3>
+
+          {thread.body_plain && (
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+              {thread.body_plain.slice(0, 200)}
+            </p>
+          )}
+
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MessageSquare className="h-3.5 w-3.5" />
+              {thread.reply_count || 0} comments
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {(thread.view_count || 0).toLocaleString()} views
+            </span>
+          </div>
+        </Link>
+      </CardContent>
+    </Card>
   );
 }

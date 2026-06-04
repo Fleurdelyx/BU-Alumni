@@ -3,51 +3,69 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { AppLayout } from '@/components/app-layout';
 import { createClient } from '@/lib/supabase/client';
-import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ThreadCard } from '@/components/forum/thread-card';
+import { Pagination } from '@/components/forum/pagination';
 import { Button } from '@/components/ui/button';
-import type { ForumThread, Profile } from '@/lib/types';
-import { formatDistanceToNow } from 'date-fns';
-import { Bookmark, MessageSquare, Eye } from 'lucide-react';
+import type { ForumThread } from '@/lib/types';
+import { Bookmark } from 'lucide-react';
 
-type ThreadWithAuthor = ForumThread & { author: Profile | null };
+const PER_PAGE = 20;
+
+type ThreadWithAuthor = ForumThread & { author: { full_name: string; avatar_url: string | null } | null };
 
 export default function BookmarksPage() {
   const supabase = createClient();
   const [threads, setThreads] = useState<ThreadWithAuthor[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+
+  async function loadBookmarks(pageNum: number) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setUserId(null);
+      setLoading(false);
+      return;
+    }
+    setUserId(user.id);
+
+    const start = pageNum * PER_PAGE;
+    const end = start + PER_PAGE - 1;
+
+    const { data, count } = await supabase
+      .from('forum_bookmarks')
+      .select('thread:forum_threads(*, author:profiles(full_name, avatar_url), category:forum_categories(*))', { count: 'exact' })
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .range(start, end);
+
+    const flattened = (data || [])
+      .map((d: any) => d.thread)
+      .filter(Boolean) as ThreadWithAuthor[];
+
+    if (pageNum === 0) {
+      setThreads(flattened);
+    } else {
+      setThreads((prev) => [...prev, ...flattened]);
+    }
+    setHasMore((count || 0) > (pageNum + 1) * PER_PAGE);
+    setLoading(false);
+  }
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        setUserId(null);
-        setLoading(false);
-        return;
-      }
-      setUserId(user.id);
-
-      const { data } = await supabase
-        .from('forum_bookmarks')
-        .select('thread:forum_threads(*, author:profiles(*), category:forum_categories(*))')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      const flattened = (data || [])
-        .map((d: any) => d.thread)
-        .filter(Boolean) as ThreadWithAuthor[];
-
-      setThreads(flattened);
-      setLoading(false);
-    }
-    load();
+    loadBookmarks(0);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    loadBookmarks(nextPage);
+  };
 
   return (
     <AppLayout>
@@ -57,7 +75,7 @@ export default function BookmarksPage() {
           <p className="text-slate mt-1">Threads you&apos;ve saved for later.</p>
         </div>
 
-        {loading ? (
+        {loading && threads.length === 0 ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-24 rounded-lg" />
@@ -76,45 +94,16 @@ export default function BookmarksPage() {
         ) : (
           <div className="space-y-3">
             {threads.map((thread) => (
-              <Link key={thread.id} href={`/forum/${thread.category?.slug}/${thread.slug}`}>
-                <Card className="hover:shadow-md transition-shadow border-mist">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={thread.author?.avatar_url || ''} alt={thread.author?.full_name || ''} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                          {thread.author?.full_name?.[0] || '?'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-display font-semibold text-forest truncate">{thread.title}</h3>
-                        <p className="text-sm text-slate mt-0.5">
-                          {thread.author?.full_name || 'Unknown'} · {thread.category?.name} ·{' '}
-                          {formatDistanceToNow(new Date(thread.created_at))} ago
-                        </p>
-                        <div className="flex items-center gap-4 mt-2">
-                          <span className="flex items-center gap-1 text-xs text-slate">
-                            <MessageSquare className="h-3.5 w-3.5" />
-                            {thread.reply_count || 0}
-                          </span>
-                          <span className="flex items-center gap-1 text-xs text-slate">
-                            <Eye className="h-3.5 w-3.5" />
-                            {thread.view_count || 0}
-                          </span>
-                          {thread.tags?.map((tag) => (
-                            <Badge key={tag} variant="outline" className="text-[10px]">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
+              <ThreadCard
+                key={thread.id}
+                thread={thread}
+                category={thread.category}
+              />
             ))}
           </div>
         )}
+
+        <Pagination hasMore={hasMore} onLoadMore={handleLoadMore} loading={loading && threads.length > 0} />
       </div>
     </AppLayout>
   );
