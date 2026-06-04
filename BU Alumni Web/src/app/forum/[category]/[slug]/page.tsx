@@ -125,7 +125,8 @@ function ThreadDetailContent() {
         .single();
 
       if (error || !thr) {
-        console.warn('[ThreadDetail] Thread not found for id:', threadId, 'Error:', error);
+        console.warn('[ThreadDetail] Thread not found for id:', threadId);
+        console.warn('[ThreadDetail] Error code:', (error as any)?.code, 'Message:', (error as any)?.message, 'Details:', (error as any)?.details);
         // Fallback: try by slug just in case
         const { data: bySlug } = await supabase
           .from('forum_threads')
