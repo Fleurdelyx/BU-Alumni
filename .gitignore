@@ -1,0 +1,11 @@
+# Supabase temp files
+supabase/.temp/
+
+# IDE
+.cursor/
+
+# OS
+.DS_Store
+
+# Misc
+*.log
