@@ -33,11 +33,18 @@ function NewThreadContent() {
   const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('alumni');
   const { toast } = useToast();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id || null);
+      const user = session?.user ?? null;
+      setUserId(user?.id || null);
+      if (user) {
+        supabase.from('profiles').select('role').eq('id', user.id).single().then(({ data }) => {
+          setUserRole(data?.role || 'alumni');
+        });
+      }
     });
     supabase
       .from('forum_categories')
@@ -69,6 +76,11 @@ function NewThreadContent() {
   const handleSubmit = async () => {
     if (!selectedCategory || !title.trim() || !bodyPlain.trim() || !userId) {
       toast({ title: 'Please fill in all required fields', variant: 'destructive' });
+      return;
+    }
+    const cat = categories.find((c) => c.id === selectedCategory);
+    if (cat?.slug === 'announcements' && userRole !== 'admin' && userRole !== 'moderator') {
+      toast({ title: 'Only staff can post in Announcements', variant: 'destructive' });
       return;
     }
     setSubmitting(true);
@@ -107,6 +119,14 @@ function NewThreadContent() {
         setSubmitting(false);
         return;
       }
+
+      // Auto-upvote author's own thread
+      await supabase.rpc('apply_vote', {
+        p_user_id: userId,
+        p_target_type: 'thread',
+        p_target_id: newThread.id,
+        p_vote_type: 'up',
+      });
 
       const cat = categories.find((c) => c.id === selectedCategory);
       toast({ title: 'Thread published successfully!' });

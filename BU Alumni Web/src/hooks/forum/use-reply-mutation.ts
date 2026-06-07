@@ -24,7 +24,14 @@ export function useReplyMutation() {
           .single();
         if (error) throw error;
         if (!data) throw new Error('Reply was created but could not be retrieved.');
-        return data;
+        // Auto-upvote author's own reply
+        await supabase.rpc('apply_vote', {
+          p_user_id: authorId,
+          p_target_type: 'reply',
+          p_target_id: data.id,
+          p_vote_type: 'up',
+        });
+        return { ...data, upvotes: (data.upvotes || 0) + 1 };
       } finally {
         setLoading(false);
       }

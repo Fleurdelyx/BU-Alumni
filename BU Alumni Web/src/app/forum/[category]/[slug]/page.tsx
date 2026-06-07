@@ -3,6 +3,16 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState, Suspense } from 'react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { AppLayout } from '@/components/app-layout';
@@ -88,6 +98,8 @@ function ThreadDetailContent() {
   const [editTitle, setEditTitle] = useState('');
   const [editBody, setEditBody] = useState('');
   const [editBodyPlain, setEditBodyPlain] = useState('');
+  const [deleteThreadDialogOpen, setDeleteThreadDialogOpen] = useState(false);
+  const [deleteReplyId, setDeleteReplyId] = useState<string | null>(null);
 
   const { checkBookmarked, toggleBookmark } = useBookmark();
   const { createReply, updateReply, softDeleteReply, markAsAnswer, restoreReply } = useReplyMutation();
@@ -335,6 +347,7 @@ function ThreadDetailContent() {
     setSubmittingReply(true);
     try {
       const newReply = await createReply(thread.id, userId, body, plainText, parentId);
+      setReplyUserVotes((prev) => ({ ...prev, [newReply.id]: 'up' }));
       if (!parentId) {
         setReplies((prev) => {
           if (prev.find((r) => r.id === newReply.id)) return prev;
@@ -368,16 +381,7 @@ function ThreadDetailContent() {
     }
   };
 
-  const handleDeleteReply = async (replyId: string) => {
-    try {
-      await softDeleteReply(replyId);
-      setReplies((prev) => prev.map((r) => (r.id === replyId ? { ...r, is_deleted: true } : r)));
-      setReplyCount((c) => Math.max(c - 1, 0));
-      toast({ title: 'Reply deleted' });
-    } catch {
-      toast({ title: 'Failed to delete reply', variant: 'destructive' });
-    }
-  };
+  // handleDeleteReply replaced by dialog-based flow above
 
   const handleRestoreReply = async (replyId: string) => {
     try {
@@ -417,14 +421,36 @@ function ThreadDetailContent() {
     }
   };
 
-  const handleDeleteThread = async () => {
+  const handleDeleteThread = () => {
+    setDeleteThreadDialogOpen(true);
+  };
+
+  const confirmDeleteThread = async () => {
     if (!thread) return;
     try {
       await softDeleteThread(thread.id);
+      setDeleteThreadDialogOpen(false);
       toast({ title: 'Thread deleted', description: 'Redirecting to forum...' });
       window.location.href = `/forum/${categorySlug}`;
     } catch {
       toast({ title: 'Failed to delete thread', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteReply = (replyId: string) => {
+    setDeleteReplyId(replyId);
+  };
+
+  const confirmDeleteReply = async () => {
+    if (!deleteReplyId) return;
+    try {
+      await softDeleteReply(deleteReplyId);
+      setReplies((prev) => prev.map((r) => (r.id === deleteReplyId ? { ...r, is_deleted: true } : r)));
+      setReplyCount((c) => Math.max(c - 1, 0));
+      setDeleteReplyId(null);
+      toast({ title: 'Reply deleted' });
+    } catch {
+      toast({ title: 'Failed to delete reply', variant: 'destructive' });
     }
   };
 
@@ -436,7 +462,7 @@ function ThreadDetailContent() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="space-y-4 max-w-4xl mx-auto pt-4">
+        <div className="space-y-4 max-w-4xl mx-auto pt-6">
           <Skeleton className="h-40 rounded-2xl" />
           <Skeleton className="h-32 rounded-2xl" />
           <Skeleton className="h-32 rounded-2xl" />
@@ -448,10 +474,10 @@ function ThreadDetailContent() {
   if (!thread) {
     return (
       <AppLayout>
-        <div className="text-center py-12 text-muted-foreground max-w-4xl mx-auto">
-          <p className="text-lg font-medium mb-2">Thread not found.</p>
-          <p className="text-sm font-mono bg-muted px-3 py-1 rounded inline-block">id: {threadId || 'undefined'}</p>
-          <p className="text-sm mt-2">Open DevTools (F12) → Console for debug info.</p>
+        <div className="text-center py-20 max-w-4xl mx-auto">
+          <p className="text-2xl font-serif text-[hsl(var(--ink))] mb-3">Thread not found.</p>
+          <p className="text-sm font-mono bg-[hsl(var(--parchment))] px-4 py-1.5 rounded-lg inline-block text-[hsl(var(--slate))]">id: {threadId || 'undefined'}</p>
+          <p className="text-sm text-[hsl(var(--slate))] mt-3">Open DevTools (F12) → Console for debug info.</p>
         </div>
       </AppLayout>
     );
@@ -460,7 +486,7 @@ function ThreadDetailContent() {
   if (thread.is_deleted && !isAdmin) {
     return (
       <AppLayout>
-        <div className="text-center py-12 text-muted-foreground max-w-4xl mx-auto">
+        <div className="text-center py-20 text-[hsl(var(--slate))] max-w-4xl mx-auto">
           This thread has been removed.
         </div>
       </AppLayout>
@@ -469,20 +495,17 @@ function ThreadDetailContent() {
 
   return (
     <AppLayout>
-      <div className="relative max-w-4xl mx-auto pt-4">
-        <FloatingOrb className="w-[400px] h-[400px] bg-primary/10 -top-20 -right-20" delay={0} />
-        <FloatingOrb className="w-[300px] h-[300px] bg-meadow/10 top-1/3 -left-20" delay={2} />
-
+      <div className="relative max-w-4xl mx-auto pt-6 pb-12">
         {/* Back link */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mb-6"
+          transition={{ duration: 0.4 }}
+          className="mb-8"
         >
           <Link
             href={`/forum/${categorySlug}`}
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-[hsl(var(--slate))] hover:text-[hsl(var(--forest))] transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to {thread.category?.name}
@@ -491,15 +514,15 @@ function ThreadDetailContent() {
 
         {/* Thread */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.5 }}
         >
-          <Card className={`rounded-2xl border-mist/50 dark:border-sidebar-border/30 shadow-sm overflow-hidden ${thread.is_deleted ? 'opacity-60 border-dashed' : 'bg-card'}`}>
-            <div className="h-[3px] w-full bg-gradient-to-r from-primary/60 via-meadow/50 to-primary/20" />
+          <Card className={`rounded-2xl border-[hsl(var(--border))] shadow-warm overflow-hidden ${thread.is_deleted ? 'opacity-60 border-dashed' : 'bg-[hsl(var(--card))]'}`}>
+            <div className="h-1 w-full bg-gradient-to-r from-[hsl(var(--jungle))] via-[hsl(var(--bamboo))] to-[hsl(var(--terracotta))]" />
             <div className="flex">
               {/* Vote column */}
-              <div className="flex flex-col items-center gap-0.5 py-4 px-3 bg-muted/30 dark:bg-sidebar-border/10 min-w-[56px]">
+              <div className="flex flex-col items-center gap-0.5 py-5 px-3 bg-[hsl(var(--parchment))] dark:bg-[hsl(var(--sidebar-accent))] min-w-[56px]">
                 <VoteBar
                   upvotes={thread.upvotes || 0}
                   downvotes={thread.downvotes || 0}
@@ -511,24 +534,24 @@ function ThreadDetailContent() {
               {/* Content */}
               <CardContent className="flex-1 p-6 sm:p-8">
                 {/* Meta badges */}
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                  <Badge variant="outline" className="text-xs bg-background border-mist/40 dark:border-sidebar-border/30">
+                <div className="flex flex-wrap items-center gap-2 mb-5">
+                  <Badge variant="outline" className="text-xs bg-[hsl(var(--paper))] border-[hsl(var(--fog))] text-[hsl(var(--slate))]">
                     {thread.category?.name}
                   </Badge>
                   {thread.is_pinned && (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--gold))] bg-[hsl(var(--gold-light))] px-2 py-0.5 rounded-full">
                       <Pin className="h-3 w-3" />
                       Pinned
                     </span>
                   )}
                   {thread.is_locked && (
-                    <span className="flex items-center gap-1 text-xs font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[hsl(var(--slate))] bg-[hsl(var(--muted))] px-2 py-0.5 rounded-full">
                       <Lock className="h-3 w-3" />
                       Locked
                     </span>
                   )}
                   {thread.is_solved && (
-                    <Badge className="bg-success/10 text-success border-success/20 text-xs">
+                    <Badge className="bg-[hsl(var(--jungle))]/10 text-[hsl(var(--jungle))] border-[hsl(var(--jungle))]/20 text-xs">
                       <CheckCircle2 className="mr-1 h-3 w-3" />
                       Solved
                     </Badge>
@@ -541,7 +564,7 @@ function ThreadDetailContent() {
                 {isEditingThread ? (
                   <div className="space-y-3">
                     <input
-                      className="w-full text-2xl font-display font-bold text-card-foreground bg-transparent border-b border-input focus:outline-none focus:border-primary pb-1"
+                      className="w-full text-2xl font-serif font-bold text-[hsl(var(--ink))] bg-transparent border-b border-[hsl(var(--fog))] focus:outline-none focus:border-[hsl(var(--jungle))] pb-1"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
                     />
@@ -557,38 +580,38 @@ function ThreadDetailContent() {
                       <Button variant="outline" size="sm" onClick={() => setIsEditingThread(false)}>
                         Cancel
                       </Button>
-                      <Button size="sm" onClick={handleEditThread} className="bg-primary hover:bg-emerald">
+                      <Button size="sm" onClick={handleEditThread} className="bg-[hsl(var(--forest))] hover:bg-[hsl(var(--jungle))]">
                         Save Changes
                       </Button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <h1 className="text-2xl sm:text-3xl font-display font-bold text-card-foreground leading-tight">
+                    <h1 className="text-3xl sm:text-4xl font-serif text-[hsl(var(--ink))] dark:text-[hsl(var(--ink))] leading-[1.15]">
                       {thread.title}
                     </h1>
-                    <div className="mt-3">
+                    <div className="mt-4">
                       <AuthorBlock
                         author={thread.author}
                         createdAt={thread.created_at}
                         updatedAt={thread.updated_at}
                       />
                     </div>
-                    <div className="mt-5 text-[15px] leading-relaxed">
+                    <div className="mt-6 text-[15px] leading-[1.7] text-[hsl(var(--charcoal))] dark:text-[hsl(var(--charcoal))]">
                       <RenderBody body={thread.body} />
                     </div>
                   </>
                 )}
 
                 {/* Action bar */}
-                <div className="flex flex-wrap items-center gap-2 mt-7 pt-5 border-t border-mist/30">
-                  <Button variant="ghost" size="sm" onClick={handleShare} className="text-muted-foreground hover:text-foreground">
+                <div className="flex flex-wrap items-center gap-2 mt-8 pt-6 border-t border-[hsl(var(--fog))]">
+                  <Button variant="ghost" size="sm" onClick={handleShare} className="text-[hsl(var(--slate))] hover:text-[hsl(var(--forest))]">
                     <Share2 className="mr-1.5 h-4 w-4" />
                     Share
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={handleToggleBookmark} className="text-muted-foreground hover:text-primary">
+                  <Button variant="ghost" size="sm" onClick={handleToggleBookmark} className="text-[hsl(var(--slate))] hover:text-[hsl(var(--jungle))]">
                     {isBookmarked ? (
-                      <BookmarkCheck className="mr-1.5 h-4 w-4 text-primary" />
+                      <BookmarkCheck className="mr-1.5 h-4 w-4 text-[hsl(var(--jungle))]" />
                     ) : (
                       <Bookmark className="mr-1.5 h-4 w-4" />
                     )}
@@ -596,11 +619,11 @@ function ThreadDetailContent() {
                   </Button>
                   {(isAuthor || isAdmin) && !isEditingThread && (
                     <>
-                      <Button variant="ghost" size="sm" onClick={() => setIsEditingThread(true)} className="text-muted-foreground hover:text-foreground">
+                      <Button variant="ghost" size="sm" onClick={() => setIsEditingThread(true)} className="text-[hsl(var(--slate))] hover:text-[hsl(var(--forest))]">
                         <Pencil className="mr-1.5 h-4 w-4" />
                         Edit
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={handleDeleteThread}>
+                      <Button variant="ghost" size="sm" className="text-[hsl(var(--terracotta))] hover:text-[hsl(var(--terracotta))]" onClick={handleDeleteThread}>
                         <Trash2 className="mr-1.5 h-4 w-4" />
                         Delete
                       </Button>
@@ -614,58 +637,55 @@ function ThreadDetailContent() {
 
         {/* Replies */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="mt-8"
+          transition={{ duration: 0.5, delay: 0.15 }}
+          className="mt-10"
         >
-          <div className="flex items-center gap-3 mb-5">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-              <MessageSquare className="h-4 w-4" />
-            </div>
-            <h2 className="text-lg font-display font-bold text-forest">
+          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-[hsl(var(--fog))]">
+            <MessageSquare className="h-5 w-5 text-[hsl(var(--jungle))]" />
+            <h2 className="text-xl font-serif text-[hsl(var(--ink))]">
               {replyCount} {replyCount === 1 ? 'Reply' : 'Replies'}
             </h2>
           </div>
 
-          <motion.div variants={container} initial="hidden" animate="show" className="space-y-4">
+          <div className="space-y-4">
             {topLevelReplies.map((reply) => (
-              <motion.div key={reply.id} variants={listItem}>
-                <ReplyCard
-                  reply={reply}
-                  threadAuthorId={thread.author_id}
-                  userId={userId}
-                  userRole={userRole}
-                  userVote={replyUserVotes[reply.id]}
-                  onVote={(replyId, voteType) => handleVote('reply', replyId, voteType)}
-                  onMarkAsAnswer={handleMarkAsAnswer}
-                  onEdit={handleEditReply}
-                  onDelete={handleDeleteReply}
-                  onReply={(parentId, body, plainText) => handleSubmitReply(body, plainText, parentId)}
-                >
-                  {childReplies
-                    .filter((c) => c.parent_id === reply.id)
-                    .map((child) => (
-                      <div key={child.id} className="mt-3">
-                        <ReplyCard
-                          reply={child}
-                          threadAuthorId={thread.author_id}
-                          userId={userId}
-                          userRole={userRole}
-                          userVote={replyUserVotes[child.id]}
-                          onVote={(replyId, voteType) => handleVote('reply', replyId, voteType)}
-                          onMarkAsAnswer={handleMarkAsAnswer}
-                          onEdit={handleEditReply}
-                          onDelete={handleDeleteReply}
-                          onReply={(parentId, body, plainText) => handleSubmitReply(body, plainText, parentId)}
-                          depth={1}
-                        />
-                      </div>
-                    ))}
-                </ReplyCard>
-              </motion.div>
+              <ReplyCard
+                key={reply.id}
+                reply={reply}
+                threadAuthorId={thread.author_id}
+                userId={userId}
+                userRole={userRole}
+                userVote={replyUserVotes[reply.id]}
+                onVote={(replyId, voteType) => handleVote('reply', replyId, voteType)}
+                onMarkAsAnswer={handleMarkAsAnswer}
+                onEdit={handleEditReply}
+                onDelete={handleDeleteReply}
+                onReply={(parentId, body, plainText) => handleSubmitReply(body, plainText, parentId)}
+              >
+                {childReplies
+                  .filter((c) => c.parent_id === reply.id)
+                  .map((child) => (
+                    <div key={child.id} className="mt-3">
+                      <ReplyCard
+                        reply={child}
+                        threadAuthorId={thread.author_id}
+                        userId={userId}
+                        userRole={userRole}
+                        userVote={replyUserVotes[child.id]}
+                        onVote={(replyId, voteType) => handleVote('reply', replyId, voteType)}
+                        onMarkAsAnswer={handleMarkAsAnswer}
+                        onEdit={handleEditReply}
+                        onDelete={handleDeleteReply}
+                        onReply={(parentId, body, plainText) => handleSubmitReply(body, plainText, parentId)}
+                        depth={1}
+                      />
+                    </div>
+                  ))}
+              </ReplyCard>
             ))}
-          </motion.div>
+          </div>
 
           <Pagination hasMore={replies.length < replyCount} onLoadMore={handleLoadMore} loading={submittingReply} />
         </motion.div>
@@ -673,16 +693,16 @@ function ThreadDetailContent() {
         {/* Reply form */}
         {!thread.is_locked && (
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.25 }}
-            className="mt-8"
+            transition={{ duration: 0.5, delay: 0.25 }}
+            className="mt-10"
           >
-            <Card className="rounded-2xl border-mist/50 dark:border-sidebar-border/30 bg-card shadow-sm">
-              <div className="h-[3px] w-full bg-gradient-to-r from-meadow/60 via-primary/50 to-meadow/30" />
+            <Card className="rounded-2xl border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-warm">
+              <div className="h-1 w-full bg-gradient-to-r from-[hsl(var(--terracotta))] via-[hsl(var(--gold))] to-[hsl(var(--jungle))]" />
               <CardContent className="p-6 sm:p-8">
-                <h3 className="text-sm font-semibold text-forest mb-4 flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold uppercase tracking-wider text-[hsl(var(--forest))] mb-5 flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-[hsl(var(--jungle))]" />
                   Post a reply
                 </h3>
                 <ReplyForm
@@ -698,12 +718,48 @@ function ThreadDetailContent() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-8 text-muted-foreground border-2 border-dashed border-mist/40 dark:border-sidebar-border/30 rounded-2xl bg-card mt-8"
+            className="text-center py-10 text-[hsl(var(--slate))] border-2 border-dashed border-[hsl(var(--fog))] rounded-2xl bg-[hsl(var(--card))] mt-10"
           >
-            <Lock className="h-6 w-6 mx-auto mb-2 text-muted-foreground/40" />
+            <Lock className="h-6 w-6 mx-auto mb-2 text-[hsl(var(--mist))]" />
             This thread is locked. New replies are not allowed.
           </motion.div>
         )}
+
+        {/* Delete Thread Confirmation */}
+        <AlertDialog open={deleteThreadDialogOpen} onOpenChange={setDeleteThreadDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this post?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. The post will be marked as deleted and hidden from most users.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeleteThread} className="bg-[hsl(var(--terracotta))] hover:bg-[hsl(var(--terracotta))]/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Reply Confirmation */}
+        <AlertDialog open={!!deleteReplyId} onOpenChange={(open) => !open && setDeleteReplyId(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this comment?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. The comment will be marked as deleted and hidden from most users.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteReplyId(null)}>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDeleteReply} className="bg-[hsl(var(--terracotta))] hover:bg-[hsl(var(--terracotta))]/90">
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </AppLayout>
   );

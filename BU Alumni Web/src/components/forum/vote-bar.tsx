@@ -29,31 +29,40 @@ export function VoteBar({
     onVote?.(type);
   };
 
+  const scoreColor =
+    score > 0
+      ? 'text-[hsl(var(--jungle))]'
+      : score < 0
+      ? 'text-[hsl(var(--terracotta))]'
+      : 'text-[hsl(var(--slate))]';
+
+  const upBtnClass =
+    userVote === 'up'
+      ? 'bg-[hsl(var(--jungle))] text-white shadow-sm'
+      : 'text-[hsl(var(--slate))] hover:bg-[hsl(var(--muted))]';
+
+  const downBtnClass =
+    userVote === 'down'
+      ? 'bg-[hsl(var(--terracotta))] text-white shadow-sm'
+      : 'text-[hsl(var(--slate))] hover:bg-[hsl(var(--muted))]';
+
   if (orientation === 'horizontal') {
     return (
       <div className="flex items-center gap-1">
         <button
           onClick={(e) => handleClick(e, 'up')}
-          className={`p-0.5 rounded hover:bg-muted transition-colors ${
-            userVote === 'up' ? 'text-primary' : 'text-muted-foreground'
-          }`}
+          className={`p-1.5 rounded-lg transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center ${upBtnClass}`}
         >
-          <ArrowBigUp className={iconSize} />
+          <ArrowBigUp className={iconSize} strokeWidth={1.5} />
         </button>
-        <span
-          className={`${scoreClass} font-bold min-w-[1.5rem] text-center ${
-            score > 0 ? 'text-primary' : score < 0 ? 'text-destructive' : 'text-muted-foreground'
-          }`}
-        >
+        <span className={`${scoreClass} font-bold tabular-nums min-w-[1.5rem] text-center ${scoreColor}`}>
           {score}
         </span>
         <button
           onClick={(e) => handleClick(e, 'down')}
-          className={`p-0.5 rounded hover:bg-muted transition-colors ${
-            userVote === 'down' ? 'text-destructive' : 'text-muted-foreground'
-          }`}
+          className={`p-1.5 rounded-lg transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center ${downBtnClass}`}
         >
-          <ArrowBigDown className={iconSize} />
+          <ArrowBigDown className={iconSize} strokeWidth={1.5} />
         </button>
       </div>
     );
@@ -63,26 +72,16 @@ export function VoteBar({
     <div className="flex flex-col items-center gap-0.5">
       <button
         onClick={(e) => handleClick(e, 'up')}
-        className={`p-0.5 rounded hover:bg-muted transition-colors ${
-          userVote === 'up' ? 'text-primary' : 'text-muted-foreground'
-        }`}
+        className={`p-1 rounded-lg transition-all duration-200 ${upBtnClass}`}
       >
-        <ArrowBigUp className={iconSize} />
+        <ArrowBigUp className={iconSize} strokeWidth={1.5} />
       </button>
-      <span
-        className={`${scoreClass} font-bold ${
-          score > 0 ? 'text-primary' : score < 0 ? 'text-destructive' : 'text-muted-foreground'
-        }`}
-      >
-        {score}
-      </span>
+      <span className={`${scoreClass} font-bold tabular-nums ${scoreColor}`}>{score}</span>
       <button
         onClick={(e) => handleClick(e, 'down')}
-        className={`p-0.5 rounded hover:bg-muted transition-colors ${
-          userVote === 'down' ? 'text-destructive' : 'text-muted-foreground'
-        }`}
+        className={`p-1 rounded-lg transition-all duration-200 ${downBtnClass}`}
       >
-        <ArrowBigDown className={iconSize} />
+        <ArrowBigDown className={iconSize} strokeWidth={1.5} />
       </button>
     </div>
   );

@@ -19,7 +19,7 @@ import {
 import { ThreadCard } from '@/components/forum/thread-card';
 import { Pagination } from '@/components/forum/pagination';
 import type { ForumCategory, ForumThread } from '@/lib/types';
-import { ArrowUpDown, PlusCircle, ArrowLeft, Hash } from 'lucide-react';
+import { ArrowUpDown, PlusCircle, ArrowLeft, Hash, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 /* ─── Floating Orb ─── */
@@ -57,6 +57,7 @@ function CategoryContent() {
   const [userVotes, setUserVotes] = useState<Record<string, 'up' | 'down'>>({});
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('alumni');
   const [filter, setFilter] = useState<'all' | 'popular' | 'unanswered' | 'my-posts'>('all');
   const [sort, setSort] = useState<'latest-reply' | 'newest' | 'most-views'>('latest-reply');
   const [page, setPage] = useState(0);
@@ -64,7 +65,13 @@ function CategoryContent() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserId(session?.user?.id || null);
+      const user = session?.user ?? null;
+      setUserId(user?.id || null);
+      if (user) {
+        supabase.from('profiles').select('role').eq('id', user.id).single().then(({ data }) => {
+          setUserRole(data?.role || 'alumni');
+        });
+      }
     });
   }, [supabase]);
 
@@ -225,36 +232,43 @@ function CategoryContent() {
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
+          transition={{ duration: 0.5 }}
+          className="mb-10"
         >
           <Link
             href="/forum"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+            className="inline-flex items-center gap-1.5 text-sm text-[hsl(var(--slate))] hover:text-[hsl(var(--forest))] transition-colors mb-5"
           >
             <ArrowLeft className="h-4 w-4" />
             Back to Forum
           </Link>
 
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold uppercase tracking-wider mb-3">
-                <Hash className="h-3.5 w-3.5" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[hsl(var(--jungle))]/8 text-[hsl(var(--jungle))] text-[10px] font-bold uppercase tracking-[0.15em] mb-4">
+                <Hash className="h-3 w-3" />
                 Category
               </div>
-              <h1 className="text-3xl sm:text-4xl font-bold font-display text-forest tracking-tight">
+              <h1 className="text-4xl sm:text-5xl font-serif text-[hsl(var(--ink))] dark:text-[hsl(var(--ink))] leading-[1.1]">
                 {category?.name || 'Category'}
               </h1>
-              <p className="text-muted-foreground mt-2 max-w-lg leading-relaxed">
+              <p className="text-[hsl(var(--slate))] mt-3 max-w-lg leading-relaxed text-base">
                 {category?.description}
               </p>
             </div>
-            <Link href={`/forum/new?category=${categorySlug}`}>
-              <Button className="bg-primary hover:bg-emerald text-white shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 hover:scale-[1.02]">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                New Post
-              </Button>
-            </Link>
+            {categorySlug === 'announcements' && userRole !== 'admin' && userRole !== 'moderator' ? (
+              <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[hsl(var(--muted))] text-[hsl(var(--slate))] text-sm font-medium">
+                <Lock className="h-4 w-4" />
+                Staff Only
+              </span>
+            ) : (
+              <Link href={`/forum/new?category=${categorySlug}`}>
+                <Button className="bg-[hsl(var(--forest))] hover:bg-[hsl(var(--jungle))] text-[hsl(var(--paper))] shadow-warm-lg transition-all duration-300 hover:scale-[1.02] rounded-xl px-5">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  New Post
+                </Button>
+              </Link>
+            )}
           </div>
         </motion.div>
 
@@ -262,8 +276,8 @@ function CategoryContent() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6"
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-8 pb-6 border-b border-[hsl(var(--fog))]"
         >
           <div className="flex flex-wrap gap-2">
             {(['all', 'popular', 'unanswered', 'my-posts'] as const).map((f) => (
@@ -274,8 +288,8 @@ function CategoryContent() {
                 onClick={() => setFilter(f)}
                 className={
                   filter === f
-                    ? 'bg-primary hover:bg-emerald text-white shadow-md shadow-primary/15'
-                    : 'border-mist/50 dark:border-sidebar-border/30 text-forest hover:border-primary/30 hover:text-primary bg-card'
+                    ? 'bg-[hsl(var(--forest))] hover:bg-[hsl(var(--jungle))] text-[hsl(var(--paper))] rounded-xl shadow-warm'
+                    : 'border-[hsl(var(--fog))] text-[hsl(var(--charcoal))] hover:border-[hsl(var(--jungle))] hover:text-[hsl(var(--jungle))] bg-[hsl(var(--card))] rounded-xl'
                 }
               >
                 {f === 'all' && 'All'}
@@ -286,8 +300,8 @@ function CategoryContent() {
             ))}
           </div>
           <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
-            <SelectTrigger className="w-[180px] bg-card border-mist/50 dark:border-sidebar-border/30 focus:border-primary/30">
-              <ArrowUpDown className="mr-2 h-4 w-4 text-muted-foreground" />
+            <SelectTrigger className="w-[180px] bg-[hsl(var(--card))] border-[hsl(var(--fog))] focus:border-[hsl(var(--jungle))] rounded-xl">
+              <ArrowUpDown className="mr-2 h-4 w-4 text-[hsl(var(--slate))]" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -300,35 +314,35 @@ function CategoryContent() {
 
         {/* Thread List */}
         {loading && threads.length === 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-28 rounded-xl" />
+              <Skeleton key={i} className="h-32 rounded-xl" />
             ))}
           </div>
         ) : threads.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-center py-14 border-2 border-dashed border-mist/40 dark:border-sidebar-border/30 rounded-2xl bg-card"
+            className="text-center py-16 border-2 border-dashed border-[hsl(var(--fog))] rounded-2xl bg-[hsl(var(--card))]"
           >
-            <Hash className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-            <p className="text-sm text-muted-foreground font-medium">No threads found</p>
-            <p className="text-xs text-muted-foreground mt-1">Be the first to start a discussion!</p>
+            <Hash className="h-10 w-10 mx-auto text-[hsl(var(--mist))] mb-4" />
+            <p className="text-[hsl(var(--charcoal))] font-medium">No threads found</p>
+            <p className="text-sm text-[hsl(var(--slate))] mt-1">Be the first to start a discussion!</p>
           </motion.div>
         ) : (
-          <motion.div variants={container} initial="hidden" animate="show" className="space-y-3">
-            {threads.map((thread) => (
-              <motion.div key={thread.id} variants={listItem}>
-                <ThreadCard
-                  thread={thread}
-                  category={category}
-                  categorySlug={categorySlug}
-                  userVote={userVotes[thread.id]}
-                  onVote={handleVote}
-                />
-              </motion.div>
+          <div className="space-y-4">
+            {threads.map((thread, i) => (
+              <ThreadCard
+                key={thread.id}
+                thread={thread}
+                category={category}
+                categorySlug={categorySlug}
+                userVote={userVotes[thread.id]}
+                onVote={handleVote}
+                index={i}
+              />
             ))}
-          </motion.div>
+          </div>
         )}
 
         <Pagination hasMore={hasMore} onLoadMore={handleLoadMore} loading={loading && threads.length > 0} />

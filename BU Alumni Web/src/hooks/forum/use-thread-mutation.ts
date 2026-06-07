@@ -32,7 +32,16 @@ export function useThreadMutation() {
           .select('*, author:profiles(*), category:forum_categories(*)')
           .single();
         if (error) throw error;
-        return data;
+        // Auto-upvote author's own thread
+        if (data) {
+          await supabase.rpc('apply_vote', {
+            p_user_id: values.author_id,
+            p_target_type: 'thread',
+            p_target_id: data.id,
+            p_vote_type: 'up',
+          });
+        }
+        return { ...data, upvotes: (data.upvotes || 0) + 1 };
       } finally {
         setLoading(false);
       }

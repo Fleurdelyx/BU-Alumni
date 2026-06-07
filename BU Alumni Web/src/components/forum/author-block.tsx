@@ -40,21 +40,21 @@ export function AuthorBlock({
   const name = getDisplayName(author);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2.5">
       <Avatar className={size === 'sm' ? 'h-6 w-6' : 'h-8 w-8'}>
         <AvatarImage src={author?.avatar_url || ''} alt={name} />
-        <AvatarFallback className="bg-primary/10 text-primary text-xs">
+        <AvatarFallback className="text-[10px] font-semibold bg-[hsl(var(--jungle))] text-[hsl(var(--paper))]">
           {getInitials(name)}
         </AvatarFallback>
       </Avatar>
       <div className="flex items-center gap-2 flex-wrap">
-        <span className={`font-semibold text-primary ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>
+        <span className={`font-semibold text-[hsl(var(--forest))] dark:text-[hsl(var(--forest))] ${size === 'sm' ? 'text-xs' : 'text-sm'}`}>
           {name}
         </span>
         {showTime && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-[hsl(var(--slate))]">
             {formatDistanceToNow(new Date(createdAt))} ago
-            {isEdited && ' · edited'}
+            {isEdited && <span className="text-[hsl(var(--mist))]"> · edited</span>}
           </span>
         )}
         {meta}

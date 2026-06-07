@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle2, Pencil, Trash2, Reply } from 'lucide-react';
@@ -60,126 +59,120 @@ export function ReplyCard({
 
   if (reply.is_deleted) {
     return (
-      <Card className="border-dashed border-muted-foreground/20 opacity-60">
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground italic">
-            {canModerate ? '[deleted — moderators can restore]' : '[deleted]'}
-          </p>
-        </CardContent>
-      </Card>
+      <div className={`${depth > 0 ? 'ml-6' : ''} py-3 px-4 rounded-lg border border-dashed border-[hsl(var(--mist))] opacity-50`}>
+        <p className="text-sm text-[hsl(var(--slate))] italic">
+          {canModerate ? '[deleted — moderators can restore]' : '[deleted]'}
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className={depth > 0 ? 'ml-6 border-l-2 border-mist/30 dark:border-sidebar-border/20 pl-4' : ''}>
-      <Card
-        className={`border-mist/50 dark:border-sidebar-border/30 hover:border-primary/20 transition-colors ${
-          reply.is_accepted ? 'border-success/40 bg-success/[0.03]' : ''
-        }`}
-      >
-        <CardContent className="p-0 flex">
-          {/* Vote column */}
-          <div className="flex flex-col items-center gap-0.5 py-3 px-2 bg-muted/30 dark:bg-sidebar-border/10 min-w-[40px]">
-            <VoteBar
-              upvotes={reply.upvotes || 0}
-              downvotes={reply.downvotes || 0}
-              userVote={userVote}
-              onVote={(type) => onVote?.(reply.id, type)}
-              size="sm"
-            />
-          </div>
+    <div className={depth > 0 ? 'ml-6 pl-4 border-l-2 border-[hsl(var(--fog))] dark:border-[hsl(var(--mist))]' : ''}>
+      <div className={`relative flex gap-0 rounded-xl overflow-hidden bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-warm hover:shadow-warm-lg transition-all duration-300 ${
+        reply.is_accepted ? 'ring-1 ring-[hsl(var(--jungle))]/30' : ''
+      }`}>
+        {/* Vote sidebar */}
+        <div className="flex flex-col items-center gap-0.5 py-3 px-2 bg-[hsl(var(--parchment))] dark:bg-[hsl(var(--sidebar-accent))] min-w-[44px]">
+          <VoteBar
+            upvotes={reply.upvotes || 0}
+            downvotes={reply.downvotes || 0}
+            userVote={userVote}
+            onVote={(type) => onVote?.(reply.id, type)}
+            size="sm"
+          />
+        </div>
 
-          {/* Content */}
-          <div className="flex-1 min-w-0 p-4">
-            <AuthorBlock
-              author={reply.author as Profile}
-              createdAt={reply.created_at}
-              updatedAt={reply.updated_at}
-              editCount={reply.edit_count}
-              size="sm"
-              meta={
-                reply.is_accepted ? (
-                  <Badge className="bg-green-50 text-green-700 border-green-200 text-xs font-semibold">
-                    <CheckCircle2 className="mr-1 h-3 w-3" />
-                    Answer
-                  </Badge>
-                ) : null
-              }
-            />
-
-            {isEditing ? (
-              <ReplyForm
-                initialValue={reply.body}
-                onSubmit={handleEdit}
-                onCancel={() => setIsEditing(false)}
-                submitLabel="Save Changes"
-              />
-            ) : (
-              <div className="mt-2">
-                <RenderBody body={reply.body} />
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-2 mt-3">
-              {onReply && !isReplying && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs rounded-lg hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  onClick={() => setIsReplying(true)}
-                >
-                  <Reply className="mr-1 h-3 w-3" />
-                  Reply
-                </Button>
-              )}
-              {canEdit && !isEditing && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs rounded-lg hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Pencil className="mr-1 h-3 w-3" />
-                  Edit
-                </Button>
-              )}
-              {canDelete && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
-                  onClick={() => onDelete?.(reply.id)}
-                >
-                  <Trash2 className="mr-1 h-3 w-3" />
-                  Delete
-                </Button>
-              )}
-              {userId === threadAuthorId && !reply.is_accepted && onMarkAsAnswer && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-xs rounded-lg hover:bg-green-50 hover:text-green-600 transition-colors"
-                  onClick={() => onMarkAsAnswer(reply.id)}
-                >
+        {/* Content */}
+        <div className="flex-1 min-w-0 p-4">
+          <AuthorBlock
+            author={reply.author as Profile}
+            createdAt={reply.created_at}
+            updatedAt={reply.updated_at}
+            editCount={reply.edit_count}
+            size="sm"
+            meta={
+              reply.is_accepted ? (
+                <Badge className="bg-[hsl(var(--jungle))]/10 text-[hsl(var(--jungle))] border-[hsl(var(--jungle))]/20 text-xs font-semibold">
                   <CheckCircle2 className="mr-1 h-3 w-3" />
-                  Mark as Answer
-                </Button>
-              )}
-            </div>
+                  Answer
+                </Badge>
+              ) : null
+            }
+          />
 
-            {isReplying && (
-              <div className="mt-3">
-                <ReplyForm
-                  onSubmit={handleReply}
-                  onCancel={() => setIsReplying(false)}
-                  submitLabel="Post Reply"
-                  placeholder={`Replying to ${reply.author?.full_name || '...'}`}
-                />
-              </div>
+          {isEditing ? (
+            <ReplyForm
+              initialValue={reply.body}
+              onSubmit={handleEdit}
+              onCancel={() => setIsEditing(false)}
+              submitLabel="Save Changes"
+            />
+          ) : (
+            <div className="mt-2 text-[15px] leading-relaxed text-[hsl(var(--charcoal))] dark:text-[hsl(var(--charcoal))]">
+              <RenderBody body={reply.body} />
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            {onReply && !isReplying && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs rounded-lg text-[hsl(var(--slate))] hover:text-[hsl(var(--jungle))] hover:bg-[hsl(var(--jungle))]/5 transition-colors"
+                onClick={() => setIsReplying(true)}
+              >
+                <Reply className="mr-1 h-3 w-3" />
+                Reply
+              </Button>
+            )}
+            {canEdit && !isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs rounded-lg text-[hsl(var(--slate))] hover:text-[hsl(var(--copper))] hover:bg-[hsl(var(--copper))]/5 transition-colors"
+                onClick={() => setIsEditing(true)}
+              >
+                <Pencil className="mr-1 h-3 w-3" />
+                Edit
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs rounded-lg text-[hsl(var(--slate))] hover:text-[hsl(var(--terracotta))] hover:bg-[hsl(var(--terracotta))]/5 transition-colors"
+                onClick={() => onDelete?.(reply.id)}
+              >
+                <Trash2 className="mr-1 h-3 w-3" />
+                Delete
+              </Button>
+            )}
+            {userId === threadAuthorId && !reply.is_accepted && onMarkAsAnswer && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs rounded-lg text-[hsl(var(--slate))] hover:text-[hsl(var(--jungle))] hover:bg-[hsl(var(--jungle))]/5 transition-colors"
+                onClick={() => onMarkAsAnswer(reply.id)}
+              >
+                <CheckCircle2 className="mr-1 h-3 w-3" />
+                Mark as Answer
+              </Button>
             )}
           </div>
-        </CardContent>
-      </Card>
+
+          {isReplying && (
+            <div className="mt-3">
+              <ReplyForm
+                onSubmit={handleReply}
+                onCancel={() => setIsReplying(false)}
+                submitLabel="Post Reply"
+                placeholder={`Replying to ${reply.author?.full_name || '...'}`}
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       {children}
     </div>

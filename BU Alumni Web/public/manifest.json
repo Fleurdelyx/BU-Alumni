@@ -1,0 +1,28 @@
+{
+  "name": "BU Alumni Tracer Study",
+  "short_name": "BU Alumni",
+  "description": "Baliuag University Alumni Tracer Study Portal",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f5f0e8",
+  "theme_color": "#2d6a3e",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/logos/bu.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logos/bu.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "social"],
+  "lang": "en",
+  "dir": "ltr"
+}
