@@ -1,0 +1,107 @@
+
+{
+  "entities": {
+    "Alumnus": {
+      "title": "Alumnus Profile",
+      "description": "Represents a comprehensive alumnus profile containing full GTS data based on the official Baliuag University form.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID" },
+        "name": { "type": "string", "description": "Full name (Surname, First Name, Middle Name)" },
+        "address": { "type": "string", "description": "Permanent Address" },
+        "email": { "type": "string", "format": "email" },
+        "contactNumber": { "type": "string" },
+        "civilStatus": { "type": "string", "enum": ["Single", "Married", "Separated", "Widowed", "Single Parent"] },
+        "sex": { "type": "string", "enum": ["Male", "Female"] },
+        "degree": { "type": "string", "description": "Degree(s) / Specialization" },
+        "college": { "type": "string", "description": "College(s) / University(ies) attended" },
+        "yearGraduated": { "type": "number" },
+        "honors": { "type": "string", "description": "Honor(s) or Award(s) Received" },
+        "professionalExams": { "type": "string", "description": "Professional Examination(s) Passed" },
+        "trainingTitle": { "type": "string", "description": "Title of Training or Advanced Study" },
+        "trainingDuration": { "type": "string" },
+        "trainingInstitution": { "type": "string" },
+        "isEmployed": { "type": "string", "description": "Present employment status (Employed, Self-employed, etc.)" },
+        "reasonNotEmployed": { "type": "string" },
+        "employmentStatus": { "type": "string", "enum": ["Regular/Permanent", "Temporary", "Casual", "Contractual", "Part-time"] },
+        "occupation": { "type": "string", "description": "Present Occupation" },
+        "lineOfBusiness": { "type": "string" },
+        "placeOfWork": { "type": "string", "enum": ["Local", "Abroad"] },
+        "isFirstJob": { "type": "string", "enum": ["Yes", "No"] },
+        "reasonStaying": { "type": "string" },
+        "reasonChange": { "type": "string" },
+        "timeToFindJob": { "type": "string" },
+        "howFoundJob": { "type": "string" },
+        "isFirstJobRelated": { "type": "string", "enum": ["Yes", "No"] },
+        "reasonAccepting": { "type": "string" },
+        "initialEarnings": { "type": "string" },
+        "curriculumRelevance": { "type": "string", "enum": ["Yes", "No"] },
+        "usefulCompetencies": { "type": "string" },
+        "suggestions": { "type": "string", "description": "Suggestions to improve course/program" },
+        "avatarUrl": { "type": "string" },
+        "submissionDate": { "type": "string", "format": "date-time" },
+        "surveyCompleted": { "type": "boolean" },
+        "lastQuestionnaireTitle": { "type": "string" }
+      },
+      "required": ["userId", "name", "email", "degree", "yearGraduated"]
+    },
+    "Questionnaire": {
+      "title": "Study Definition",
+      "description": "Definition of a Graduate Tracer Study.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "questions": { "type": "array", "items": { "type": "string" } },
+        "isActive": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["published", "draft"] },
+        "datePublished": { "type": "string" },
+        "responseCount": { "type": "number" }
+      }
+    },
+    "QuestionnaireResponse": {
+      "title": "Individual Response",
+      "description": "A set of answers for a specific study.",
+      "type": "object",
+      "properties": {
+        "alumnusId": { "type": "string" },
+        "questionnaireId": { "type": "string" },
+        "responses": { "type": "object" },
+        "submissionDate": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Log": {
+      "title": "Activity Log",
+      "description": "Audit trail for system actions.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "action": { "type": "string" },
+        "details": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "auth": {
+    "providers": ["anonymous", "password"]
+  },
+  "firestore": {
+    "/alumni/{uid}": {
+      "schema": "Alumnus",
+      "description": "Alumni profiles containing full GTS data."
+    },
+    "/alumni/{uid}/questionnaireResponses/{responseId}": {
+      "schema": "QuestionnaireResponse",
+      "description": "Historical GTS responses for a specific alumnus."
+    },
+    "/questionnaires/{id}": {
+      "schema": "Questionnaire",
+      "description": "Study definitions and survey structures."
+    },
+    "/logs/{id}": {
+      "schema": "Log",
+      "description": "System-wide activity and audit logs."
+    }
+  }
+}

@@ -61,7 +61,7 @@ const cardItem = {
 };
 
 export default function MobileAppPage() {
-  const apkUrl = 'https://drive.google.com/file/d/1sH2YGEjd7I3OfaXUlpbW_9E7WdCiNMs3/view?usp=sharing';
+  const apkUrl = 'https://drive.google.com/file/d/1mezf1st4huU0uwVjQKPu2p7B9OTKnzeg/view?usp=sharing';
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(apkUrl)}`;
 
   return (
