@@ -177,7 +177,7 @@ export default function AnalyticsPage() {
                 <CardTitle className="text-card-foreground font-semibold">Respondents by Degree</CardTitle>
                 <CardDescription>Distribution of responses across degree programs.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-6">
                 <DegreeChart data={degreeData} />
               </CardContent>
             </Card>
@@ -190,7 +190,7 @@ export default function AnalyticsPage() {
                 <CardTitle className="text-card-foreground font-semibold">Employment Status</CardTitle>
                 <CardDescription>Current employment breakdown.</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="pb-6">
                 <EmploymentChart data={employmentData} />
               </CardContent>
             </Card>
