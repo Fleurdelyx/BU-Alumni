@@ -183,7 +183,14 @@ export default function DashboardPage() {
                     </p>
                   </div>
                 </div>
-                {!hasSubmitted && (
+                {hasSubmitted ? (
+                  <Button asChild variant="outline" size="sm" className="shrink-0">
+                    <Link href="/survey/review">
+                      View My Responses
+                      <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                ) : (
                   <Button asChild size="sm" className="shrink-0 bg-primary hover:bg-emerald text-white">
                     <Link href="/survey">
                       Start Survey

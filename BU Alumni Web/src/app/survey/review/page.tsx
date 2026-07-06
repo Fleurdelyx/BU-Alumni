@@ -17,7 +17,7 @@ import {
   JOB_LEVEL_REVERSE,
   fromDbBoolean,
 } from '@/lib/survey-mappings';
-import { ArrowLeft, FileText, User, GraduationCap, Briefcase, MessageSquareQuote } from 'lucide-react';
+import { ArrowLeft, FileText, User, GraduationCap, Briefcase, MessageSquareQuote, Circle } from 'lucide-react';
 
 export default function SurveyReviewPage() {
   const supabase = createClient();
@@ -51,8 +51,7 @@ export default function SurveyReviewPage() {
         `
         )
         .eq('user_id', user.id)
-        .eq('status', 'submitted')
-        .order('submitted_at', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
@@ -79,8 +78,8 @@ export default function SurveyReviewPage() {
       <AppLayout>
         <div className="max-w-2xl mx-auto text-center pt-20">
           <FileText className="h-12 w-12 mx-auto text-muted-foreground/40 mb-4" />
-          <h1 className="text-2xl font-bold font-display">No submitted response</h1>
-          <p className="text-muted-foreground mt-2 mb-6">You haven&apos;t completed the tracer study yet.</p>
+          <h1 className="text-2xl font-bold font-display">No response yet</h1>
+          <p className="text-muted-foreground mt-2 mb-6">You haven&apos;t started the tracer study yet.</p>
           <Button asChild>
             <Link href="/survey">Start Tracer Study</Link>
           </Button>
@@ -89,33 +88,51 @@ export default function SurveyReviewPage() {
     );
   }
 
-  const a = data.section_a || {};
-  const employment = data.employment || {};
-  const skills = data.skills || {};
+  const isDraft = data.status !== 'submitted';
+  const first = (arr: any) => (Array.isArray(arr) ? arr[0] : arr);
+  const a = first(data.section_a) || {};
+  const employment = first(data.employment) || {};
+  const skills = first(data.skills) || {};
 
   return (
     <AppLayout>
       <div className="max-w-3xl mx-auto space-y-6 pt-2 pb-12">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold font-display">My Tracer Study</h1>
             <p className="text-sm text-muted-foreground">
-              Submitted on{' '}
-              {data.submitted_at
-                ? new Date(data.submitted_at).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })
-                : '—'}
+              {isDraft ? (
+                <span className="inline-flex items-center gap-1.5 text-amber-600">
+                  <Circle className="h-3 w-3 fill-current" />
+                  Draft — submit the tracer study to finalize your response
+                </span>
+              ) : (
+                <>
+                  Submitted on{' '}
+                  {data.submitted_at
+                    ? new Date(data.submitted_at).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : '—'}
+                </>
+              )}
             </p>
           </div>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/dashboard">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to dashboard
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            {isDraft && (
+              <Button size="sm" asChild>
+                <Link href="/survey">Continue Survey</Link>
+              </Button>
+            )}
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/dashboard">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to dashboard
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -219,10 +236,10 @@ export default function SurveyReviewPage() {
                 </ul>
               </div>
             )}
-            {skills.curriculum_suggestions && (
+            {skills.suggestions_to_improve && (
               <div>
                 <p className="font-medium mb-1">Suggestions to Improve Curriculum</p>
-                <p className="text-muted-foreground whitespace-pre-line">{skills.curriculum_suggestions}</p>
+                <p className="text-muted-foreground whitespace-pre-line">{skills.suggestions_to_improve}</p>
               </div>
             )}
           </CardContent>
