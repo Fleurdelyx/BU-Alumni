@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>You're invited to BU Alumni</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F7F5F0;font-family:'Source Sans 3','Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+        <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#FDFCFA;border-radius:16px;overflow:hidden;border:1px solid #E8E4D9;box-shadow:0 4px 24px rgba(11,61,32,0.08);">
+          <!-- Header -->
+          <tr>
+            <td style="padding:40px 32px 24px;text-align:center;">
+              <div style="display:inline-block;padding:8px;background:#ffffff;border:1px solid #E8E4D9;border-radius:12px;box-shadow:0 2px 8px rgba(11,61,32,0.06);">
+                <img src="https://bu-alumni-web.vercel.app/logos/bu.png" alt="Baliuag University" width="56" height="56" style="display:block;border-radius:8px;">
+              </div>
+              <h1 style="margin:16px 0 0;font-family:Georgia,'DM Serif Display',serif;font-size:26px;font-weight:700;color:#0B3D20;letter-spacing:-0.02em;">BU Alumni</h1>
+              <p style="margin:4px 0 0;font-size:11px;font-weight:600;color:#258045;letter-spacing:0.15em;text-transform:uppercase;">Tracer Study</p>
+              <div style="margin:20px auto 0;width:40px;height:3px;background:linear-gradient(90deg,#D96A3D,#DAA520);border-radius:2px;"></div>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding:16px 40px 40px;color:#4A4A45;font-size:16px;line-height:1.65;">
+<h2 style="margin:0 0 16px;font-family:Georgia,'DM Serif Display',serif;font-size:28px;font-weight:700;color:#0B3D20;letter-spacing:-0.02em;">You're invited</h2>
+<p style="margin:0 0 24px;">Hi there,</p>
+<p style="margin:0 0 24px;">You've been invited to join the <strong style="color:#0B3D20;">BU Alumni Tracer Study</strong> admin portal. Click the button below to accept the invitation and set up your account.</p>
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:32px 0;">
+                <tr>
+                  <td style="border-radius:10px;background:#258045;text-align:center;box-shadow:0 4px 12px rgba(37,128,69,0.25);">
+                    <a href="{{ .ConfirmationURL }}" target="_blank" style="display:inline-block;padding:14px 32px;color:#F7F5F0;text-decoration:none;font-weight:600;font-size:16px;border-radius:10px;font-family:'Source Sans 3','Plus Jakarta Sans',system-ui,sans-serif;">Accept invitation</a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:24px 0 0;font-size:14px;color:#747469;">If the button doesn't work, copy and paste this link into your browser:</p>
+              <p style="margin:8px 0 0;font-size:13px;word-break:break-all;"><a href="{{ .ConfirmationURL }}" style="color:#258045;text-decoration:underline;">{{ .ConfirmationURL }}</a></p>
+<p style="margin:32px 0 0;font-size:14px;color:#747469;">If you were not expecting this invitation, you can safely ignore this email.</p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background:#F7F5F0;padding:28px 40px;text-align:center;color:#747469;font-size:13px;line-height:1.6;border-top:1px solid #E8E4D9;">
+              <p style="margin:0 0 6px;font-weight:600;color:#0B3D20;">Baliuag University</p>
+              <p style="margin:0 0 12px;">Alumni Relations Office</p>
+              <p style="margin:0 0 16px;"><a href="https://bu-alumni-web.vercel.app" style="color:#258045;text-decoration:none;font-weight:600;">bu-alumni-web.vercel.app</a></p>
+              <p style="margin:16px 0 0;font-size:12px;color:#9A968A;">This is an automated message. Please do not reply directly to this email.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

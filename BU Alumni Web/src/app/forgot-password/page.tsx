@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
     if (error) {
       setError(error.message);
     } else {
-      setMessage('Check your email for a password reset link.');
+      setMessage('Check your email (including spam/junk folders) for a password reset link.');
     }
   };
 

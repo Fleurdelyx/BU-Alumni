@@ -20,6 +20,7 @@ import {
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { PrivacyPolicyPreview, TermsOfServicePreview } from '@/components/glance-preview';
 
 /* ─── Animated Counter ─── */
 function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
@@ -556,14 +557,14 @@ export default function LandingPage() {
               <h4 className="font-semibold text-sm uppercase tracking-wider text-white/80 mb-4">Resources</h4>
               <ul className="space-y-2.5">
                 <li>
-                  <a href="https://baliuagu.edu.ph/posts/baliuag-university-data-privacy-statement" target="_blank" rel="noopener noreferrer" className="text-white/60 hover:text-white text-sm transition-colors duration-200">
+                  <PrivacyPolicyPreview className="text-white/60 hover:text-white text-sm transition-colors duration-200">
                     Privacy Policy
-                  </a>
+                  </PrivacyPolicyPreview>
                 </li>
                 <li>
-                  <Link href="#" className="text-white/60 hover:text-white text-sm transition-colors duration-200">
+                  <TermsOfServicePreview className="text-white/60 hover:text-white text-sm transition-colors duration-200">
                     Terms of Service
-                  </Link>
+                  </TermsOfServicePreview>
                 </li>
                 <li>
                   <Link href="#" className="text-white/60 hover:text-white text-sm transition-colors duration-200">
@@ -577,9 +578,7 @@ export default function LandingPage() {
             <p className="text-white/50 text-sm">
               &copy; {new Date().getFullYear()} Baliuag University. All rights reserved.
             </p>
-            <p className="text-white/40 text-xs">
-              Made with care for the BU Community
-            </p>
+
           </div>
         </div>
       </footer>

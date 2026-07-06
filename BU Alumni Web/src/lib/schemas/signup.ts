@@ -23,7 +23,8 @@ export const SignupSchema = z
     firstName: firstNameField,
     middleName: nameField.optional().or(z.literal('')),
     lastName: lastNameField,
-    email: z.string().email('Invalid email address').toLowerCase(),
+    email: z.string().email('Invalid email address').toLowerCase().optional().or(z.literal('')),
+    studentId: z.string().regex(/^\d{7}$/, 'Student ID must be exactly 7 digits').optional().or(z.literal('')),
     password: z
       .string()
       .min(8, 'At least 8 characters')
@@ -42,6 +43,10 @@ export const SignupSchema = z
   .refine((d) => d.password === d.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
+  })
+  .refine((d) => d.email || d.studentId, {
+    message: 'Either email or student ID is required',
+    path: ['email'],
   });
 
 export type SignupInput = z.infer<typeof SignupSchema>;

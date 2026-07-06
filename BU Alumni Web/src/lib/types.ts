@@ -12,7 +12,19 @@ export type Profile = {
   degree: string | null;
   college: string | null;
   is_verified: boolean;
+  student_id: string | null;
   created_at: string;
+  updated_at: string;
+};
+
+export type SiteSettings = {
+  id: number;
+  restrict_email_domain: boolean;
+  allowed_email_domains: string[];
+  student_id_only_login: boolean;
+  require_student_id: boolean;
+  chatbot_enabled: boolean;
+  chatbot_api_key: string | null;
   updated_at: string;
 };
 

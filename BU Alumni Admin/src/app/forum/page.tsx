@@ -272,7 +272,7 @@ export default function ForumModPage() {
                     </p>
                     {r.target_type === 'thread' && (
                       <a
-                        href={`https://alumni.baliuag.edu.ph/forum`}
+                        href={`${process.env.NEXT_PUBLIC_ALUMNI_APP_URL || 'https://bu-alumni-web.vercel.app'}/forum`}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center text-xs text-primary hover:text-primary/80 font-medium mt-2 pl-3 hover:underline"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -23,14 +23,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PasswordStrength } from '@/components/password-strength';
 import { createClient } from '@/lib/supabase/client';
 import { SignupSchema, type SignupInput } from '@/lib/schemas/signup';
 import { logAuditEvent } from '@/lib/audit';
-import { Loader2, Eye, EyeOff, ArrowLeft, UserPlus } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Loader2, Eye, EyeOff, ArrowLeft, UserPlus, Info, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { PrivacyPolicyPreview, TermsOfServicePreview } from '@/components/glance-preview';
 
 /* ─── Floating Orb ─── */
 function FloatingOrb({ className, delay = 0 }: { className: string; delay?: number }) {
@@ -42,6 +46,8 @@ function FloatingOrb({ className, delay = 0 }: { className: string; delay?: numb
     />
   );
 }
+
+const SIGNUP_DRAFT_KEY = 'bu_alumni_signup_draft';
 
 const COLLEGES = [
   'College of Liberal Arts and General Education (CLAGE)',
@@ -113,10 +119,7 @@ const COURSES_BY_COLLEGE: Record<string, string[]> = {
   ],
 };
 
-const BATCH_YEARS = Array.from(
-  { length: new Date().getFullYear() - 1989 },
-  (_, i) => 1990 + i
-).reverse();
+
 
 export default function SignupPage() {
   const [error, setError] = useState('');
@@ -124,8 +127,27 @@ export default function SignupPage() {
   const [attempts, setAttempts] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [hasReadPrivacy, setHasReadPrivacy] = useState(false);
+  const [hasReadTerms, setHasReadTerms] = useState(false);
+  const [hasDraft, setHasDraft] = useState(false);
+  const isInitialCollegeMount = useRef(true);
+  const [siteSettings, setSiteSettings] = useState<{
+    restrict_email_domain?: boolean;
+    allowed_email_domains?: string[];
+    student_id_only_login?: boolean;
+    require_student_id?: boolean;
+    graduation_year_min?: number;
+    graduation_year_max?: number;
+  } | null>(null);
   const router = useRouter();
   const supabase = createClient();
+
+  const currentYear = new Date().getFullYear();
+  const batchYears = useMemo(() => {
+    const min = siteSettings?.graduation_year_min ?? 1990;
+    const max = siteSettings?.graduation_year_max ?? currentYear;
+    return Array.from({ length: max - min + 1 }, (_, i) => min + i).reverse();
+  }, [siteSettings, currentYear]);
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(SignupSchema),
@@ -144,14 +166,72 @@ export default function SignupPage() {
     mode: 'onBlur',
   });
 
-  const password = form.watch('password');
-  const selectedCollege = form.watch('college');
+  const { watch, setValue } = form;
+  const password = watch('password');
+  const selectedCollege = watch('college');
+
+  // Load draft and site settings on mount
+  useEffect(() => {
+    try {
+      const draft = localStorage.getItem(SIGNUP_DRAFT_KEY);
+      if (draft) {
+        const parsed = JSON.parse(draft);
+        if (parsed.firstName) setValue('firstName', parsed.firstName);
+        if (parsed.middleName) setValue('middleName', parsed.middleName);
+        if (parsed.lastName) setValue('lastName', parsed.lastName);
+        if (parsed.email) setValue('email', parsed.email);
+        if (parsed.studentId) setValue('studentId', parsed.studentId);
+        if (parsed.college) setValue('college', parsed.college);
+        if (parsed.degree) setValue('degree', parsed.degree);
+        if (parsed.batchYear) setValue('batchYear', parsed.batchYear);
+        if (parsed.hasReadPrivacy) setHasReadPrivacy(true);
+        if (parsed.hasReadTerms) setHasReadTerms(true);
+        setHasDraft(true);
+      }
+    } catch {
+      // ignore parse errors
+    }
+    supabase.from('site_settings').select('*').eq('id', 1).single().then(({ data }) => {
+      if (data) setSiteSettings(data);
+    });
+  }, [setValue, supabase]);
+
+  // Auto-save draft on field changes
+  useEffect(() => {
+    const subscription = watch((value) => {
+      const draft = {
+        firstName: value.firstName || '',
+        middleName: value.middleName || '',
+        lastName: value.lastName || '',
+        email: value.email || '',
+        studentId: value.studentId || '',
+        college: value.college || '',
+        degree: value.degree || '',
+        batchYear: value.batchYear || new Date().getFullYear(),
+        hasReadPrivacy,
+        hasReadTerms,
+      };
+      localStorage.setItem(SIGNUP_DRAFT_KEY, JSON.stringify(draft));
+      if (hasDraft) setHasDraft(true);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, hasReadPrivacy, hasReadTerms, hasDraft]);
 
   useEffect(() => {
+    // Skip clearing degree on initial mount so draft-restored degree survives
+    if (isInitialCollegeMount.current) {
+      isInitialCollegeMount.current = false;
+      return;
+    }
     if (selectedCollege) {
       form.setValue('degree', '');
     }
   }, [selectedCollege, form]);
+
+  const clearDraft = () => {
+    localStorage.removeItem(SIGNUP_DRAFT_KEY);
+    setHasDraft(false);
+  };
 
   const onSubmit = async (values: SignupInput) => {
     if (attempts >= 3) {
@@ -161,19 +241,59 @@ export default function SignupPage() {
     setError('');
     setLoading(true);
 
+    // Enforce site settings
+    if (siteSettings?.require_student_id && !values.studentId) {
+      setLoading(false);
+      setError('Student ID is required for registration.');
+      return;
+    }
+    if (siteSettings?.restrict_email_domain && values.email) {
+      const domain = values.email.split('@')[1]?.toLowerCase();
+      const allowed = siteSettings.allowed_email_domains || [];
+      if (!domain || !allowed.includes(domain)) {
+        setLoading(false);
+        setError(`Registration is restricted to the following email domains: ${allowed.map(d => `@${d}`).join(', ')}`);
+        return;
+      }
+    }
+
     try {
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: values.email,
+        email: values.email || `${values.studentId}@bu-alumni.local`,
         password: values.password,
         options: {
           data: {
             first_name: values.firstName.trim(),
             middle_name: values.middleName.trim() || null,
             last_name: values.lastName.trim(),
+            student_id: values.studentId || null,
           },
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
+
+      // Handle "User already registered" — user may be unconfirmed
+      if (signUpError && signUpError.message.toLowerCase().includes('user already registered')) {
+        // Try to resend confirmation email
+        const { error: resendError } = await supabase.auth.resend({
+          type: 'signup',
+          email: values.email,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+
+        setLoading(false);
+
+        if (resendError) {
+          setError('This email is already registered. Please sign in or use a different email.');
+        } else {
+          // Confirmation email resent — redirect to login with message
+          await logAuditEvent('signup_confirmation_resent', 'auth', undefined, { email: values.email });
+          router.push('/login?confirmed=check-email');
+        }
+        return;
+      }
 
       if (signUpError) {
         setLoading(false);
@@ -183,19 +303,23 @@ export default function SignupPage() {
         return;
       }
 
-      // Update profile with college, degree, batch year
+      // Update profile with college, degree, batch year, student_id
       const user = signUpData.user;
       if (user) {
         const { error: profileError } = await supabase.from('profiles').update({
           college: values.college,
           degree: values.degree,
           batch_year: values.batchYear,
+          student_id: values.studentId || null,
         }).eq('id', user.id);
         if (profileError) {
           console.error('Profile update error:', profileError);
         }
         await logAuditEvent('signup_success', 'auth', user.id, { email: values.email });
       }
+
+      // Clear draft on successful signup
+      clearDraft();
 
       setLoading(false);
       router.push('/login?confirmed=check-email');
@@ -242,7 +366,7 @@ export default function SignupPage() {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="h-20 w-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary to-meadow flex items-center justify-center p-2 shadow-xl shadow-primary/20"
+            className="h-20 w-20 mx-auto mb-4 rounded-2xl bg-white dark:bg-card border border-border flex items-center justify-center p-2 shadow-xl shadow-primary/10"
           >
             <img src="/logos/bu.png" alt="Baliuag University" className="h-full w-full object-contain" />
           </motion.div>
@@ -271,6 +395,21 @@ export default function SignupPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="rounded-2xl bg-card border border-border shadow-xl shadow-primary/5 p-6 sm:p-8"
         >
+          {hasDraft && (
+            <div className="mb-4 p-3 rounded-lg bg-primary/5 border border-primary/20 flex items-center justify-between">
+              <span className="text-sm text-primary flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4" />
+                Your previous information has been restored
+              </span>
+              <Button type="button" variant="ghost" size="sm" onClick={() => {
+                form.reset();
+                clearDraft();
+                setHasReadPrivacy(false);
+              }}>
+                Clear
+              </Button>
+            </div>
+          )}
           <div className="flex items-center gap-3 mb-6">
             <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
               <UserPlus className="h-5 w-5" />
@@ -345,24 +484,50 @@ export default function SignupPage() {
               </div>
 
               {/* Email */}
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-foreground/80">Email Address</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="you@example.com"
-                        className="bg-input border-input focus:border-primary focus:ring-primary/20 transition-all"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground/80">Email Address</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="you@example.com"
+                            className="bg-input border-input focus:border-primary focus:ring-primary/20 transition-all"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Student ID */}
+                  <FormField
+                    control={form.control}
+                    name="studentId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground/80">Student ID</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={7}
+                            placeholder="1234567"
+                            className="bg-input border-input focus:border-primary focus:ring-primary/20 transition-all tracking-widest font-mono"
+                            {...field}
+                            onChange={(e) => {
+                              const val = e.target.value.replace(/\D/g, '').slice(0, 7);
+                              field.onChange(val);
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
               {/* Password */}
               <FormField
@@ -487,20 +652,19 @@ export default function SignupPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-foreground/80">Batch Year</FormLabel>
-                    <Select onValueChange={(v) => field.onChange(Number(v))} defaultValue={String(field.value)}>
-                      <FormControl>
-                        <SelectTrigger className="bg-input border-input focus:border-primary focus:ring-primary/20">
-                          <SelectValue placeholder="Select year" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {BATCH_YEARS.map((y) => (
-                          <SelectItem key={y} value={String(y)}>
-                            {y}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <Combobox
+                        options={batchYears.map((y) => ({ label: String(y), value: String(y) }))}
+                        value={String(field.value || '')}
+                        onChange={(v) => {
+                          const num = v === '' ? '' : Number(v);
+                          field.onChange(num);
+                        }}
+                        placeholder="Select or type year..."
+                        searchPlaceholder="Search or type year..."
+                        emptyMessage="No year found. Press Enter to use typed value."
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -511,21 +675,55 @@ export default function SignupPage() {
                 control={form.control}
                 name="agreedToTerms"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel className="text-sm text-foreground/80">
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-lg border border-border/60 p-4 bg-muted/30">
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                disabled={!hasReadPrivacy || !hasReadTerms}
+                              />
+                            </FormControl>
+                            {(!hasReadPrivacy || !hasReadTerms) && (
+                              <div className="absolute inset-0 cursor-not-allowed" />
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        {(!hasReadPrivacy || !hasReadTerms) && (
+                          <TooltipContent side="top" className="max-w-xs text-center">
+                            <p className="text-sm">
+                              Please scroll through the {hasReadPrivacy ? 'Terms of Service' : hasReadTerms ? 'Privacy Policy' : 'Privacy Policy and Terms of Service'} first to enable agreement.
+                            </p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                    <div className="space-y-1.5 leading-none">
+                      <FormLabel className={cn("text-sm", (!hasReadPrivacy || !hasReadTerms) && "text-muted-foreground")}>
                         I agree to the{' '}
-                        <a href="https://baliuagu.edu.ph/posts/baliuag-university-data-privacy-statement" target="_blank" rel="noopener noreferrer" className="text-primary hover:text-emerald font-medium transition-colors">
+                        <PrivacyPolicyPreview onScrollComplete={() => setHasReadPrivacy(true)}>
                           Privacy Policy
-                        </a>{' '}
+                        </PrivacyPolicyPreview>{' '}
                         and{' '}
-                        <Link href="/terms" className="text-primary hover:text-emerald font-medium transition-colors">
+                        <TermsOfServicePreview onScrollComplete={() => setHasReadTerms(true)}>
                           Terms of Service
-                        </Link>
+                        </TermsOfServicePreview>
                       </FormLabel>
+                      {(!hasReadPrivacy || !hasReadTerms) && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <Info className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                          Click "Privacy Policy" and "Terms of Service" above and scroll each to the bottom to enable this checkbox
+                        </p>
+                      )}
+                      {hasReadPrivacy && hasReadTerms && (
+                        <p className="text-xs text-primary flex items-center gap-1.5">
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                          You have read both documents. You may now agree.
+                        </p>
+                      )}
                       <FormMessage />
                     </div>
                   </FormItem>

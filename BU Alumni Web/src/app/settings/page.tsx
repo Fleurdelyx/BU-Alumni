@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { AppearanceForm } from './_components/appearance-form';
 import { AccountForm } from './_components/account-form';
 import { SecurityForm } from './_components/security-form';
+import { Palette, Bell, User, Shield } from 'lucide-react';
 
 function NotificationsForm() {
   const [prefs, setPrefs] = useState({
@@ -111,10 +112,22 @@ export default function SettingsPage() {
         </div>
         <Tabs defaultValue="appearance" className="w-full">
           <TabsList>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="appearance">
+              <Palette className="h-4 w-4 mr-2" />
+              Appearance
+            </TabsTrigger>
+            <TabsTrigger value="notifications">
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger value="account">
+              <User className="h-4 w-4 mr-2" />
+              Account
+            </TabsTrigger>
+            <TabsTrigger value="security">
+              <Shield className="h-4 w-4 mr-2" />
+              Security
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="appearance">
             <AppearanceForm />

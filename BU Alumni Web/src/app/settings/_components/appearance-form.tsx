@@ -49,7 +49,7 @@ export function AppearanceForm() {
                 </Label>
                 <Label className="[&:has([data-state=checked])>div]:border-primary">
                 <RadioGroupItem value="dark" className="sr-only" />
-                <div className="items-center rounded-md border-2 border-muted bg-popover p-1 hover:border-accent">
+                <div className="items-center rounded-md border-2 border-muted p-1 hover:border-accent">
                     <div className="space-y-2 rounded-sm bg-slate-950 p-2">
                     <div className="space-y-2 rounded-md bg-slate-800 p-2 shadow-sm">
                         <div className="h-2 w-16 rounded-lg bg-slate-400" />

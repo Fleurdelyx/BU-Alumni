@@ -1,0 +1,34 @@
+[
+  {
+    "file": "confirm_signup.html",
+    "subject": "Confirm your BU Alumni Tracer Study account"
+  },
+  {
+    "file": "magic_link.html",
+    "subject": "Sign in to BU Alumni Tracer Study"
+  },
+  {
+    "file": "recovery.html",
+    "subject": "Reset your BU Alumni Tracer Study password"
+  },
+  {
+    "file": "invite.html",
+    "subject": "You're invited to BU Alumni Tracer Study Admin"
+  },
+  {
+    "file": "email_change.html",
+    "subject": "Confirm your new BU Alumni email address"
+  },
+  {
+    "file": "reauthentication.html",
+    "subject": "{{ .Token }} is your BU Alumni verification code"
+  },
+  {
+    "file": "password_changed_notification.html",
+    "subject": "Your BU Alumni password was changed"
+  },
+  {
+    "file": "email_changed_notification.html",
+    "subject": "Your BU Alumni email address was changed"
+  }
+]

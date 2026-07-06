@@ -78,33 +78,49 @@ export function SecurityForm() {
     setError('');
     setVerifying(true);
 
-    const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
-    if (challengeError) {
+    try {
+      // Ensure the browser client still holds a session before challenging/verifying.
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        if (refreshError || !refreshData.session) {
+          setVerifying(false);
+          setError('Your session has expired. Please sign in again to enable 2FA.');
+          return;
+        }
+      }
+
+      const { data: challenge, error: challengeError } = await supabase.auth.mfa.challenge({ factorId });
+      if (challengeError) {
+        setVerifying(false);
+        setError(challengeError.message);
+        return;
+      }
+
+      const { data, error: verifyError } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challenge.id,
+        code: code.replace(/\s/g, ''),
+      });
       setVerifying(false);
-      setError(challengeError.message);
-      return;
+
+      if (verifyError) {
+        setVerifyAttempts((a) => a + 1);
+        setError(verifyError.message);
+        return;
+      }
+
+      setMessage('2FA enabled successfully! Make sure to keep your authenticator app safe.');
+      setQrCode(null);
+      setSecret(null);
+      setFactorId(null);
+      setCode('');
+      setVerifyAttempts(0);
+      loadFactors();
+    } catch (err: any) {
+      setVerifying(false);
+      setError(err?.message || 'Verification failed. Please try again.');
     }
-
-    const { data, error: verifyError } = await supabase.auth.mfa.verify({
-      factorId,
-      challengeId: challenge.id,
-      code: code.replace(/\s/g, ''),
-    });
-    setVerifying(false);
-
-    if (verifyError) {
-      setVerifyAttempts((a) => a + 1);
-      setError(verifyError.message);
-      return;
-    }
-
-    setMessage('2FA enabled successfully! Make sure to keep your authenticator app safe.');
-    setQrCode(null);
-    setSecret(null);
-    setFactorId(null);
-    setCode('');
-    setVerifyAttempts(0);
-    loadFactors();
   };
 
   const handleUnenroll = async (id: string) => {
@@ -187,6 +203,12 @@ export function SecurityForm() {
                 <Input
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && code.length === 6) {
+                      e.preventDefault();
+                      handleVerify();
+                    }
+                  }}
                   placeholder="000000"
                   maxLength={6}
                   className="max-w-[120px]"

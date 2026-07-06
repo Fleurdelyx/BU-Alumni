@@ -4,10 +4,19 @@ import { useEffect, useState } from 'react';
 import { AdminLayout } from '@/components/admin-layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, Key } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import type { Profile } from '@/lib/types';
 
@@ -18,6 +27,8 @@ export default function UsersPage() {
   const [filtered, setFiltered] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [resetUser, setResetUser] = useState<Profile | null>(null);
+  const [resetting, setResetting] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -52,6 +63,27 @@ export default function UsersPage() {
     } else {
       setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role: role as any } : u)));
       toast({ title: 'Role updated' });
+    }
+  };
+
+  const sendResetEmail = async () => {
+    if (!resetUser?.email) return;
+    setResetting(true);
+    const alumniWebUrl =
+      process.env.NEXT_PUBLIC_ALUMNI_APP_URL || 'https://bu-alumni-web.vercel.app';
+    const { error } = await supabase.auth.resetPasswordForEmail(resetUser.email, {
+      redirectTo: `${alumniWebUrl}/reset-password`,
+    });
+    setResetting(false);
+    setResetUser(null);
+
+    if (error) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    } else {
+      toast({
+        title: 'Reset email sent',
+        description: `A password reset link was sent to ${resetUser.email}.`,
+      });
     }
   };
 
@@ -108,7 +140,15 @@ export default function UsersPage() {
                       <p className="text-sm font-medium truncate">
                         {u.display_name || u.full_name || 'Unknown'}
                       </p>
-                      <p className="text-xs text-muted-foreground truncate">{u.email || u.id}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {u.email ? (
+                          <a href={`mailto:${u.email}`} className="hover:text-primary hover:underline">
+                            {u.email}
+                          </a>
+                        ) : (
+                          u.id
+                        )}
+                      </p>
                       <div className="flex items-center gap-2 mt-0.5">
                         <Badge variant="outline" className="text-[10px]">
                           {u.college || 'No college'}
@@ -145,6 +185,16 @@ export default function UsersPage() {
                       <option value="moderator">Moderator</option>
                       <option value="admin">Admin</option>
                     </select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setResetUser(u)}
+                      disabled={!u.email}
+                      title={u.email ? 'Send password reset email' : 'No email address'}
+                    >
+                      <Key className="h-4 w-4 mr-1.5" />
+                      Reset
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -155,6 +205,28 @@ export default function UsersPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={!!resetUser} onOpenChange={(open) => !open && setResetUser(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send password reset email?</DialogTitle>
+            <DialogDescription>
+              This will send a password recovery link to{' '}
+              <span className="font-medium text-foreground">{resetUser?.email}</span>. The link will
+              direct them to the alumni web app to set a new password.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResetUser(null)} disabled={resetting}>
+              Cancel
+            </Button>
+            <Button onClick={sendResetEmail} disabled={resetting}>
+              {resetting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Send reset email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

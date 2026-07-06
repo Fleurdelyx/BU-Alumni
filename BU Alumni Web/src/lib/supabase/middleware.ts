@@ -34,7 +34,7 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
   const isAuthPage = pathname === '/login' || pathname === '/signup' || pathname === '/forgot-password';
-  const isPublicPage = pathname === '/' || isAuthPage;
+  const isPublicPage = pathname === '/' || isAuthPage || pathname === '/reset-password' || pathname === '/signup-confirmed' || pathname === '/auth/callback';
 
   if (!user && !isPublicPage) {
     const url = request.nextUrl.clone();

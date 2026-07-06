@@ -45,7 +45,8 @@ export default function BookmarksPage() {
 
     const flattened = (data || [])
       .map((d: any) => d.thread)
-      .filter(Boolean) as ThreadWithAuthor[];
+      .filter(Boolean)
+      .filter((t: any) => !t.is_deleted) as ThreadWithAuthor[];
 
     if (pageNum === 0) {
       setThreads(flattened);

@@ -25,10 +25,14 @@ import {
   Check,
   ArrowRight,
   Loader2,
+  Smartphone,
+  Download,
+  MapPin,
 } from 'lucide-react';
 import { ThemeToggle } from './theme-toggle';
 import { useProfile } from '@/components/profile-context';
 import { useState, useEffect } from 'react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import type { Notification } from '@/lib/types';
 import { BuddyChatbot } from './buddy-chatbot';
 import { formatDistanceToNow } from 'date-fns';
@@ -37,6 +41,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/survey', label: 'Tracer Study', icon: FileText },
   { href: '/forum', label: 'Forum', icon: MessageSquare },
+  { href: '/career-map', label: 'Career Map', icon: MapPin },
   { href: '/directory', label: 'Directory', icon: Users },
   { href: '/profile', label: 'Profile', icon: UserCircle },
   { href: '/settings', label: 'Settings', icon: Settings },
@@ -52,6 +57,22 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [recentNotifications, setRecentNotifications] = useState<Notification[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [mobileVersion, setMobileVersion] = useState('v1.1.0');
+  const [mobileDownloadUrl, setMobileDownloadUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from('site_settings')
+      .select('mobile_app_download_url, mobile_app_version')
+      .eq('id', 1)
+      .single()
+      .then(({ data, error }) => {
+        if (!error && data) {
+          if (data.mobile_app_version?.trim()) setMobileVersion(data.mobile_app_version.trim());
+          if (data.mobile_app_download_url?.trim()) setMobileDownloadUrl(data.mobile_app_download_url.trim());
+        }
+      });
+  }, [supabase]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -165,11 +186,34 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
+        {/* Download App Promo */}
+        <div className="px-4 py-4">
+          <Link href="/mobile-app">
+            <div className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-[hsl(var(--jungle))] to-[hsl(var(--forest))] p-3.5 shadow-warm transition-all duration-300 hover:shadow-warm-lg hover:scale-[1.02]">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/15 backdrop-blur-sm ring-1 ring-white/20">
+                  <Smartphone className="h-5 w-5 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-white truncate">Get the Mobile App</p>
+                  <p className="text-[10px] text-white/70 truncate">
+                    {mobileVersion}{mobileDownloadUrl ? ' · Tap to download' : ' · Stay connected on the go'}
+                  </p>
+                </div>
+                <Download className="h-4 w-4 text-white/60 shrink-0 group-hover:text-white transition-colors" />
+              </div>
+            </div>
+          </Link>
+        </div>
+
         <div className="p-4 border-t border-sidebar-border/40 space-y-3">
           <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-sidebar-accent/30 ring-1 ring-sidebar-border/40">
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-meadow/30 dark:from-primary/30 dark:to-sidebar-primary/40 flex items-center justify-center text-primary text-xs font-bold shadow-sm ring-1 ring-primary/20">
-              {profile?.full_name?.[0] || '?'}
-            </div>
+            <Avatar className="h-9 w-9 ring-2 ring-sidebar-border/40">
+              <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'User'} />
+              <AvatarFallback className="text-xs font-bold bg-gradient-to-br from-primary/20 to-meadow/30 text-primary">
+                {profile?.full_name?.[0] || '?'}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-sidebar-foreground truncate">
                 {profile?.full_name || 'User'}
@@ -193,7 +237,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 border-b border-sidebar-border/50 bg-sidebar/95 backdrop-blur-xl z-20 flex items-center justify-between px-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)]">
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} className="text-sidebar-foreground hover:bg-sidebar-accent/60">
+          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)} className="text-sidebar-foreground hover:bg-sidebar-accent/60 h-11 w-11">
             <Menu className="h-6 w-6" />
           </Button>
           <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-mint to-sage/40 dark:from-sidebar-accent/60 dark:to-sidebar-primary/30 flex items-center justify-center p-0.5 shadow-sm ring-1 ring-sidebar-border/60">
@@ -201,11 +245,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <ThemeToggle className="text-sidebar-foreground hover:bg-sidebar-accent/60" />
+          <ThemeToggle className="text-sidebar-foreground hover:bg-sidebar-accent/60 h-11 w-11" />
           {/* Mobile notification popover */}
           <Popover open={notifOpen} onOpenChange={handleNotifOpenChange}>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative text-sidebar-foreground hover:bg-sidebar-accent/60">
+              <Button variant="ghost" size="icon" className="relative text-sidebar-foreground hover:bg-sidebar-accent/60 h-11 w-11">
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 h-4 w-4 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
@@ -264,9 +308,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </nav>
             <div className="p-4 border-t border-sidebar-border/40 space-y-3">
               <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-sidebar-accent/30 ring-1 ring-sidebar-border/40">
-                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary/20 to-meadow/30 dark:from-primary/30 dark:to-sidebar-primary/40 flex items-center justify-center text-primary text-xs font-bold shadow-sm ring-1 ring-primary/20">
-                  {profile?.full_name?.[0] || '?'}
-                </div>
+                <Avatar className="h-9 w-9 ring-2 ring-sidebar-border/40">
+                  <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'User'} />
+                  <AvatarFallback className="text-xs font-bold bg-gradient-to-br from-primary/20 to-meadow/30 text-primary">
+                    {profile?.full_name?.[0] || '?'}
+                  </AvatarFallback>
+                </Avatar>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-sidebar-foreground truncate">
                     {profile?.full_name || 'User'}
@@ -298,7 +345,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             {/* Desktop notification popover */}
             <Popover open={notifOpen} onOpenChange={handleNotifOpenChange}>
               <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative text-sidebar-foreground hover:bg-sidebar-accent/40 transition-colors">
+                <Button variant="ghost" size="icon" className="relative text-sidebar-foreground hover:bg-sidebar-accent/40 transition-colors h-11 w-11">
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
                     <span className="absolute top-1 right-1 h-4 w-4 bg-error text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
@@ -317,12 +364,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               </PopoverContent>
             </Popover>
 
-            <ThemeToggle className="text-sidebar-foreground hover:bg-sidebar-accent/40" />
+            <ThemeToggle className="text-sidebar-foreground hover:bg-sidebar-accent/40 h-11 w-11" />
             <div className="h-8 w-px bg-sidebar-border/60" />
             <Link href="/profile" className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-sidebar-accent/30 transition-colors cursor-pointer">
-              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-meadow/30 dark:from-primary/30 dark:to-sidebar-primary/40 flex items-center justify-center text-primary font-bold text-sm shadow-sm ring-1 ring-primary/20">
-                {profile?.full_name?.[0] || '?'}
-              </div>
+              <Avatar className="h-8 w-8 ring-2 ring-sidebar-border/40">
+                <AvatarImage src={profile?.avatar_url || ''} alt={profile?.full_name || 'User'} />
+                <AvatarFallback className="text-xs font-bold bg-gradient-to-br from-primary/20 to-meadow/30 text-primary">
+                  {profile?.full_name?.[0] || '?'}
+                </AvatarFallback>
+              </Avatar>
               <span className="text-sm font-semibold text-sidebar-foreground">{profile?.full_name || 'User'}</span>
             </Link>
           </div>

@@ -29,9 +29,10 @@ export async function verifyUser(req: Request) {
 }
 
 const ALLOWED_ORIGINS = [
-  'https://alumni.baliuag.edu.ph',
   'https://bu-alumni-web.vercel.app',
+  'https://bu-alumni-admin.vercel.app',
   'http://localhost:3000',
+  'http://localhost:3001',
 ];
 
 function isAllowedOrigin(origin: string): boolean {

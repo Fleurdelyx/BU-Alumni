@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useProfile } from '@/components/profile-context';
-import { Loader2, Upload, FileText, MessageSquare } from 'lucide-react';
+import { Loader2, Upload, FileText, MessageSquare, Settings } from 'lucide-react';
 import type { ForumThread, GtsResponse } from '@/lib/types';
 
 const COLLEGES = [
@@ -153,6 +153,7 @@ export default function ProfilePage() {
         .from('forum_threads')
         .select('*, category:forum_categories(name)')
         .eq('author_id', user.id)
+        .eq('is_deleted', false)
         .order('created_at', { ascending: false });
       setThreads(t || []);
 
@@ -264,13 +265,21 @@ export default function ProfilePage() {
   return (
     <AppLayout>
       <div className="space-y-8 max-w-6xl mx-auto pt-6">
-        <div>
-          <h1 className="text-3xl font-bold font-display text-forest dark:text-sidebar-foreground">
-            Your Profile
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your public profile and view your activity.
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold font-display text-forest dark:text-sidebar-foreground">
+              Your Profile
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Manage your public profile and view your activity.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <a href="/settings">
+              <Settings className="h-4 w-4 mr-2" />
+              Account Settings
+            </a>
+          </Button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-4">

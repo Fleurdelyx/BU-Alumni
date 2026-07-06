@@ -11,10 +11,31 @@ import { createClient } from '@/lib/supabase/client';
 import { AppLayout } from '@/components/app-layout';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import {
+  CIVIL_STATUS_MAP,
+  CIVIL_STATUS_REVERSE,
+  SEX_MAP,
+  SEX_REVERSE,
+  LOCATION_TYPE_MAP,
+  LOCATION_TYPE_REVERSE,
+  EMPLOYMENT_STATUS_MAP,
+  EMPLOYMENT_STATUS_REVERSE,
+  EMP_TYPE_MAP,
+  EMP_TYPE_REVERSE,
+  PLACE_OF_WORK_MAP,
+  PLACE_OF_WORK_REVERSE,
+  JOB_LEVEL_MAP,
+  JOB_LEVEL_REVERSE,
+  toDbBoolean,
+  fromDbBoolean,
+  toDateString,
+  parseYear,
+} from '@/lib/survey-mappings';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Combobox } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -42,6 +63,8 @@ import {
   GraduationCap,
   Briefcase,
   MessageSquareQuote,
+  Shield,
+  AlertTriangle,
 } from 'lucide-react';
 
 // ==================== CONSTANTS ====================
@@ -184,6 +207,8 @@ const PROVINCES: { name: string; region: string }[] = [
 ];
 
 const PROVINCE_NAMES = PROVINCES.map((p) => p.name).sort((a, b) => a.localeCompare(b));
+
+
 
 function getRegionForProvince(provinceName: string): string | undefined {
   return PROVINCES.find((p) => p.name === provinceName)?.region;
@@ -504,9 +529,9 @@ function StepHeader({ number, title, description }: { number: number; title: str
 
 // ==================== STEP 1: GENERAL INFORMATION ====================
 
-function RequiredLabel({ children }: { children: React.ReactNode }) {
+function RequiredLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <FormLabel>
+    <FormLabel className={className}>
       {children}
       <span className="text-destructive ml-0.5">*</span>
     </FormLabel>
@@ -772,7 +797,7 @@ function Step1GeneralInfo() {
 
 // ==================== STEP 2: EDUCATIONAL BACKGROUND ====================
 
-function Step2EducationalBackground() {
+function Step2EducationalBackground({ graduationYears }: { graduationYears: number[] }) {
   const { control, watch } = useFormContext<SurveyFormData>();
   const {
     fields: degreeFields,
@@ -826,7 +851,7 @@ function Step2EducationalBackground() {
                   name={`degrees.${index}.degree_and_specialization`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Degree & Specialization</FormLabel>
+                      <RequiredLabel>Degree & Specialization</RequiredLabel>
                       <FormControl>
                         <Input placeholder="BS in Information Technology" {...field} />
                       </FormControl>
@@ -839,7 +864,7 @@ function Step2EducationalBackground() {
                   name={`degrees.${index}.college_university`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>College / University</FormLabel>
+                      <RequiredLabel>College / University</RequiredLabel>
                       <FormControl>
                         <Input placeholder="Baliuag University" {...field} />
                       </FormControl>
@@ -854,9 +879,16 @@ function Step2EducationalBackground() {
                   name={`degrees.${index}.year_graduated`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Year Graduated</FormLabel>
+                      <RequiredLabel>Year Graduated</RequiredLabel>
                       <FormControl>
-                        <Input placeholder="2023" {...field} />
+                        <Combobox
+                          options={graduationYears.map((y) => ({ label: String(y), value: String(y) }))}
+                          value={String(field.value || '')}
+                          onChange={(v) => field.onChange(v)}
+                          placeholder="Select or type year..."
+                          searchPlaceholder="Search or type year..."
+                          emptyMessage="No year found. Press Enter to use typed value."
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -918,7 +950,7 @@ function Step2EducationalBackground() {
                   name={`prof_exams.${index}.name_of_examination`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name of Examination</FormLabel>
+                      <RequiredLabel>Name of Examination</RequiredLabel>
                       <FormControl>
                         <Input placeholder="Licensure Exam" {...field} />
                       </FormControl>
@@ -931,7 +963,7 @@ function Step2EducationalBackground() {
                   name={`prof_exams.${index}.date_taken`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date Taken</FormLabel>
+                      <RequiredLabel>Date Taken</RequiredLabel>
                       <FormControl>
                         <Input placeholder="Month Year" {...field} />
                       </FormControl>
@@ -944,7 +976,7 @@ function Step2EducationalBackground() {
                   name={`prof_exams.${index}.rating`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Rating</FormLabel>
+                      <RequiredLabel>Rating</RequiredLabel>
                       <FormControl>
                         <Input placeholder="80.50%" {...field} />
                       </FormControl>
@@ -962,7 +994,9 @@ function Step2EducationalBackground() {
 
       {/* Course Reasons */}
       <div className="space-y-4">
-        <h3 className="text-sm font-semibold text-card-foreground uppercase tracking-wide">Reason(s) for Taking the Course</h3>
+        <h3 className="text-sm font-semibold text-card-foreground uppercase tracking-wide">
+          Reason(s) for Taking the Course <span className="text-destructive">*</span>
+        </h3>
         <FormField
           control={control}
           name="course_reasons"
@@ -1029,7 +1063,7 @@ function Step3Trainings() {
                   name={`trainings.${index}.title`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title</FormLabel>
+                      <RequiredLabel>Title</RequiredLabel>
                       <FormControl>
                         <Input placeholder="Training title" {...field} />
                       </FormControl>
@@ -1042,7 +1076,7 @@ function Step3Trainings() {
                   name={`trainings.${index}.duration_credits`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Duration & Credits</FormLabel>
+                      <RequiredLabel>Duration & Credits</RequiredLabel>
                       <FormControl>
                         <Input placeholder="3 days / 24 hrs" {...field} />
                       </FormControl>
@@ -1055,7 +1089,7 @@ function Step3Trainings() {
                   name={`trainings.${index}.institution`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Institution</FormLabel>
+                      <RequiredLabel>Institution</RequiredLabel>
                       <FormControl>
                         <Input placeholder="Conducting body" {...field} />
                       </FormControl>
@@ -1114,7 +1148,7 @@ function Step4Employment() {
           name="presently_employed"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-base font-semibold">Are you presently employed?</FormLabel>
+              <RequiredLabel className="text-base font-semibold">Are you presently employed?</RequiredLabel>
               <FormControl>
                 <RadioOptionGroup
                   options={['Yes', 'No', 'Never Been Employed']}
@@ -1137,7 +1171,7 @@ function Step4Employment() {
               name="reasons_not_employed"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Reason(s) for not being employed</FormLabel>
+                  <RequiredLabel>Reason(s) for not being employed</RequiredLabel>
                   <FormControl>
                     <CheckboxGroup options={REASONS_NOT_EMPLOYED} value={field.value} onChange={field.onChange} />
                   </FormControl>
@@ -1156,7 +1190,7 @@ function Step4Employment() {
           name="employment_status"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Employment Status</FormLabel>
+              <RequiredLabel>Employment Status</RequiredLabel>
               <FormControl>
                 <RadioOptionGroup
                   options={['Regular/Permanent', 'Temporary', 'Contractual', 'Casual', 'Self-employed']}
@@ -1191,7 +1225,7 @@ function Step4Employment() {
             name="present_occupation"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Present Occupation</FormLabel>
+                <RequiredLabel>Present Occupation</RequiredLabel>
                 <FormControl>
                   <Input placeholder="Software Engineer" {...field} />
                 </FormControl>
@@ -1205,7 +1239,7 @@ function Step4Employment() {
             name="major_line_of_business"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Major Line of Business</FormLabel>
+                <RequiredLabel>Major Line of Business</RequiredLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
@@ -1231,7 +1265,7 @@ function Step4Employment() {
           name="place_of_work"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Place of Work</FormLabel>
+              <RequiredLabel>Place of Work</RequiredLabel>
               <FormControl>
                 <RadioOptionGroup options={['Local', 'Abroad']} value={field.value} onChange={field.onChange} />
               </FormControl>
@@ -1245,7 +1279,7 @@ function Step4Employment() {
           name="first_job_after_college"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Is this your first job after college?</FormLabel>
+              <RequiredLabel>Is this your first job after college?</RequiredLabel>
               <FormControl>
                 <RadioOptionGroup options={['Yes', 'No']} value={field.value} onChange={field.onChange} />
               </FormControl>
@@ -1260,7 +1294,7 @@ function Step4Employment() {
             name="reasons_for_staying"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Reason(s) for staying on the job</FormLabel>
+                <RequiredLabel>Reason(s) for staying on the job</RequiredLabel>
                 <FormControl>
                   <CheckboxGroup options={REASONS_STAYING} value={field.value} onChange={field.onChange} />
                 </FormControl>
@@ -1276,7 +1310,7 @@ function Step4Employment() {
             name="reasons_for_changing"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Reason(s) for changing job</FormLabel>
+                <RequiredLabel>Reason(s) for changing job</RequiredLabel>
                 <FormControl>
                   <CheckboxGroup options={REASONS_CHANGING} value={field.value} onChange={field.onChange} />
                 </FormControl>
@@ -1526,7 +1560,7 @@ function Step5SkillsFeedback() {
                   name={`peer_referrals.${index}.name`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Name</FormLabel>
+                      <RequiredLabel>Name</RequiredLabel>
                       <FormControl>
                         <Input placeholder="Full name" {...field} />
                       </FormControl>
@@ -1539,7 +1573,7 @@ function Step5SkillsFeedback() {
                   name={`peer_referrals.${index}.address`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Address</FormLabel>
+                      <RequiredLabel>Address</RequiredLabel>
                       <FormControl>
                         <Input placeholder="Complete address" {...field} />
                       </FormControl>
@@ -1552,7 +1586,7 @@ function Step5SkillsFeedback() {
                   name={`peer_referrals.${index}.contact`}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Contact</FormLabel>
+                      <RequiredLabel>Contact</RequiredLabel>
                       <FormControl>
                         <Input placeholder="Mobile / Email" {...field} />
                       </FormControl>
@@ -1760,9 +1794,12 @@ function SuccessScreen() {
           our academic programs.
         </p>
       </div>
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Button asChild variant="outline">
           <a href="/dashboard">Go to Dashboard</a>
+        </Button>
+        <Button asChild variant="outline">
+          <a href="/survey/review">Review My Responses</a>
         </Button>
         <Button asChild>
           <a href="/profile">View Profile</a>
@@ -1783,6 +1820,11 @@ export default function SurveyPage() {
   const [submitted, setSubmitted] = useState(false);
   const [responseId, setResponseId] = useState<string | undefined>(undefined);
   const [userId, setUserId] = useState<string | null>(null);
+  const [showConsent, setShowConsent] = useState(true);
+  const [consentAgreed, setConsentAgreed] = useState(false);
+  const [graduationYears, setGraduationYears] = useState<number[]>(() =>
+    Array.from({ length: new Date().getFullYear() + 1 - 1950 }, (_, i) => 1950 + i).reverse()
+  );
   const { toast } = useToast();
 
   const form = useForm<SurveyFormData>({
@@ -1809,15 +1851,26 @@ export default function SurveyPage() {
       if (cancelled) return;
       setUserId(user.id);
 
+      // Load configurable graduation year range
+      const { data: siteSettings } = await supabase
+        .from('site_settings')
+        .select('graduation_year_min, graduation_year_max')
+        .eq('id', 1)
+        .single();
+      if (siteSettings) {
+        const min = siteSettings.graduation_year_min ?? 1950;
+        const max = siteSettings.graduation_year_max ?? new Date().getFullYear();
+        setGraduationYears(Array.from({ length: max - min + 1 }, (_, i) => min + i).reverse());
+      }
+
       // Load profile
       const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
-      // Load existing draft
+      // Load the latest response (draft or submitted)
       const { data: existingResponse } = await supabase
         .from('gts_responses')
         .select('*')
         .eq('user_id', user.id)
-        .eq('status', 'draft')
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -1834,6 +1887,9 @@ export default function SurveyPage() {
 
       if (existingResponse) {
         setResponseId(existingResponse.id);
+        if (existingResponse.status === 'submitted') {
+          setSubmitted(true);
+        }
 
         // Load section A
         const { data: sectionA } = await supabase
@@ -1848,15 +1904,14 @@ export default function SurveyPage() {
             middle_name: sectionA.middle_name || defaults.middle_name,
             last_name: sectionA.last_name || defaults.last_name,
             permanent_address: sectionA.permanent_address || '',
-            email: sectionA.email || defaults.email,
             telephone: sectionA.telephone || '',
             mobile_number: sectionA.mobile_number || '',
-            civil_status: sectionA.civil_status || '',
-            sex: sectionA.sex || '',
-            date_of_birth: sectionA.date_of_birth ? new Date(sectionA.date_of_birth) : null,
+            civil_status: CIVIL_STATUS_REVERSE[sectionA.civil_status] || sectionA.civil_status || '',
+            sex: SEX_REVERSE[sectionA.sex] || sectionA.sex || '',
+            date_of_birth: sectionA.birthday ? new Date(sectionA.birthday) : null,
             region_of_origin: sectionA.region_of_origin || '',
             province: sectionA.province || '',
-            location_of_residence: sectionA.location_of_residence || '',
+            location_of_residence: LOCATION_TYPE_REVERSE[sectionA.location_type] || sectionA.location_type || '',
           });
         }
 
@@ -1864,10 +1919,10 @@ export default function SurveyPage() {
         const { data: degrees } = await supabase.from('gts_degrees').select('*').eq('response_id', existingResponse.id);
         if (degrees && degrees.length > 0) {
           defaults.degrees = degrees.map((d) => ({
-            degree_and_specialization: d.degree_and_specialization || '',
+            degree_and_specialization: d.degree_name || '',
             college_university: d.college_university || '',
-            year_graduated: d.year_graduated || '',
-            honors_awards: d.honors_awards || '',
+            year_graduated: d.year_graduated ? String(d.year_graduated) : '',
+            honors_awards: d.honors || '',
           }));
         }
 
@@ -1875,7 +1930,7 @@ export default function SurveyPage() {
         const { data: exams } = await supabase.from('gts_prof_exams').select('*').eq('response_id', existingResponse.id);
         if (exams && exams.length > 0) {
           defaults.prof_exams = exams.map((e) => ({
-            name_of_examination: e.name_of_examination || '',
+            name_of_examination: e.exam_name || '',
             date_taken: e.date_taken || '',
             rating: e.rating || '',
           }));
@@ -1884,7 +1939,7 @@ export default function SurveyPage() {
         // Load course reasons
         const { data: reasons } = await supabase.from('gts_course_reasons').select('*').eq('response_id', existingResponse.id);
         if (reasons && reasons.length > 0) {
-          defaults.course_reasons = reasons.map((r) => r.reason).filter(Boolean);
+          defaults.course_reasons = reasons.map((r) => r.reason_code).filter(Boolean);
         }
 
         // Load trainings
@@ -1892,7 +1947,7 @@ export default function SurveyPage() {
         if (trainings && trainings.length > 0) {
           defaults.trainings = trainings.map((t) => ({
             title: t.title || '',
-            duration_credits: t.duration_credits || '',
+            duration_credits: t.duration || '',
             institution: t.institution || '',
           }));
         }
@@ -1905,23 +1960,23 @@ export default function SurveyPage() {
           .maybeSingle();
         if (employment) {
           Object.assign(defaults, {
-            presently_employed: employment.presently_employed || '',
-            reasons_not_employed: employment.reasons_not_employed || [],
-            employment_status: employment.employment_status || '',
+            presently_employed: EMPLOYMENT_STATUS_REVERSE[employment.employment_status] || employment.employment_status || '',
+            reasons_not_employed: employment.not_employed_reasons || [],
+            employment_status: EMP_TYPE_REVERSE[employment.present_emp_type] || employment.present_emp_type || '',
             self_employed_skills: employment.self_employed_skills || '',
             present_occupation: employment.present_occupation || '',
             major_line_of_business: employment.major_line_of_business || '',
-            place_of_work: employment.place_of_work || '',
-            first_job_after_college: employment.first_job_after_college || '',
+            place_of_work: PLACE_OF_WORK_REVERSE[employment.place_of_work] || employment.place_of_work || '',
+            first_job_after_college: fromDbBoolean(employment.is_first_job),
             reasons_for_staying: employment.reasons_for_staying || [],
             reasons_for_changing: employment.reasons_for_changing || [],
-            how_long_first_job: employment.how_long_first_job || '',
+            how_long_first_job: employment.duration_in_first_job || '',
             how_found_first_job: employment.how_found_first_job || '',
-            how_long_to_land_first_job: employment.how_long_to_land_first_job || '',
-            job_level_first: employment.job_level_first || '',
-            job_level_current: employment.job_level_current || '',
-            initial_gross_monthly_earning: employment.initial_gross_monthly_earning || '',
-            curriculum_relevant: employment.curriculum_relevant || '',
+            how_long_to_land_first_job: employment.time_to_land_first_job || '',
+            job_level_first: JOB_LEVEL_REVERSE[employment.job_level_first] || employment.job_level_first || '',
+            job_level_current: JOB_LEVEL_REVERSE[employment.job_level_current] || employment.job_level_current || '',
+            initial_gross_monthly_earning: employment.initial_monthly_earning || '',
+            curriculum_relevant: fromDbBoolean(employment.is_curriculum_relevant),
           });
         }
 
@@ -1934,7 +1989,7 @@ export default function SurveyPage() {
         if (skills) {
           Object.assign(defaults, {
             useful_competencies: skills.useful_competencies || [],
-            suggestions_to_improve: skills.suggestions_to_improve || '',
+            suggestions_to_improve: skills.curriculum_suggestions || '',
             peer_referrals: skills.peer_referrals || [],
           });
         }
@@ -2084,15 +2139,14 @@ export default function SurveyPage() {
           middle_name: data.middle_name || null,
           last_name: data.last_name,
           permanent_address: data.permanent_address,
-          email: data.email,
           telephone: data.telephone || null,
           mobile_number: data.mobile_number,
-          civil_status: data.civil_status,
-          sex: data.sex,
-          date_of_birth: data.date_of_birth ? format(data.date_of_birth, 'yyyy-MM-dd') : null,
+          civil_status: CIVIL_STATUS_MAP[data.civil_status] || data.civil_status || null,
+          sex: SEX_MAP[data.sex] || data.sex || null,
+          birthday: toDateString(data.date_of_birth),
           region_of_origin: data.region_of_origin,
           province: data.province,
-          location_of_residence: data.location_of_residence,
+          location_type: LOCATION_TYPE_MAP[data.location_of_residence] || data.location_of_residence || null,
         },
         { onConflict: 'response_id' }
       );
@@ -2103,10 +2157,10 @@ export default function SurveyPage() {
         await supabase.from('gts_degrees').insert(
           (data.degrees || []).map((d) => ({
             response_id: newRid,
-            degree_and_specialization: d.degree_and_specialization,
+            degree_name: d.degree_and_specialization,
             college_university: d.college_university,
-            year_graduated: d.year_graduated,
-            honors_awards: d.honors_awards || null,
+            year_graduated: parseYear(d.year_graduated),
+            honors: d.honors_awards || null,
           }))
         );
       }
@@ -2117,8 +2171,8 @@ export default function SurveyPage() {
         await supabase.from('gts_prof_exams').insert(
           (data.prof_exams || []).map((e) => ({
             response_id: newRid,
-            name_of_examination: e.name_of_examination,
-            date_taken: e.date_taken,
+            exam_name: e.name_of_examination,
+            date_taken: toDateString(e.date_taken),
             rating: e.rating,
           }))
         );
@@ -2130,7 +2184,8 @@ export default function SurveyPage() {
         await supabase.from('gts_course_reasons').insert(
           (data.course_reasons || []).map((r) => ({
             response_id: newRid,
-            reason: r,
+            reason_code: r,
+            level: 'undergraduate',
           }))
         );
       }
@@ -2142,33 +2197,36 @@ export default function SurveyPage() {
           (data.trainings || []).map((t) => ({
             response_id: newRid,
             title: t.title,
-            duration_credits: t.duration_credits,
+            duration: t.duration_credits,
+            credits_earned: null,
             institution: t.institution,
           }))
         );
       }
 
       // Upsert employment
+      const dbEmploymentStatus = EMPLOYMENT_STATUS_MAP[data.presently_employed || ''] || data.presently_employed || null;
       await supabase.from('gts_employment').upsert(
         {
           response_id: newRid,
-          presently_employed: data.presently_employed || null,
-          reasons_not_employed: data.reasons_not_employed,
-          employment_status: data.employment_status || null,
+          employment_status: dbEmploymentStatus,
+          not_employed_reasons: data.reasons_not_employed,
+          present_emp_type: EMP_TYPE_MAP[data.employment_status || ''] || data.employment_status || null,
           self_employed_skills: data.self_employed_skills || null,
           present_occupation: data.present_occupation || null,
           major_line_of_business: data.major_line_of_business || null,
-          place_of_work: data.place_of_work || null,
-          first_job_after_college: data.first_job_after_college || null,
+          place_of_work: PLACE_OF_WORK_MAP[data.place_of_work || ''] || data.place_of_work || null,
+          is_first_job: toDbBoolean(data.first_job_after_college),
           reasons_for_staying: data.reasons_for_staying,
+          reasons_for_accepting: [],
           reasons_for_changing: data.reasons_for_changing,
-          how_long_first_job: data.how_long_first_job || null,
+          duration_in_first_job: data.how_long_first_job || null,
           how_found_first_job: data.how_found_first_job || null,
-          how_long_to_land_first_job: data.how_long_to_land_first_job || null,
-          job_level_first: data.job_level_first || null,
-          job_level_current: data.job_level_current || null,
-          initial_gross_monthly_earning: data.initial_gross_monthly_earning || null,
-          curriculum_relevant: data.curriculum_relevant || null,
+          time_to_land_first_job: data.how_long_to_land_first_job || null,
+          job_level_first: JOB_LEVEL_MAP[data.job_level_first || ''] || data.job_level_first || null,
+          job_level_current: JOB_LEVEL_MAP[data.job_level_current || ''] || data.job_level_current || null,
+          initial_monthly_earning: data.initial_gross_monthly_earning || null,
+          is_curriculum_relevant: toDbBoolean(data.curriculum_relevant),
         },
         { onConflict: 'response_id' }
       );
@@ -2223,9 +2281,86 @@ export default function SurveyPage() {
     }
   };
 
+  const validateAllSteps = useCallback(async (): Promise<{ valid: boolean; invalidSteps: number[] }> => {
+    const invalidSteps: number[] = [];
+    const data = getValues();
+
+    // Step 0
+    const step0Ok = await trigger([
+      'first_name', 'last_name', 'permanent_address', 'email', 'mobile_number',
+      'civil_status', 'sex', 'date_of_birth', 'region_of_origin', 'province', 'location_of_residence',
+    ]);
+    if (!step0Ok) invalidSteps.push(0);
+
+    // Step 1
+    const step1Ok = await trigger(['degrees', 'course_reasons']);
+    if (!step1Ok) invalidSteps.push(1);
+
+    // Step 2 is optional
+
+    // Step 3
+    let step3Ok = true;
+    if (!data.presently_employed) {
+      step3Ok = false;
+      setError('presently_employed', { type: 'manual', message: 'Please select your employment status' });
+    } else if (data.presently_employed === 'No' || data.presently_employed === 'Never Been Employed') {
+      if ((data.reasons_not_employed || []).length === 0) {
+        step3Ok = false;
+        setError('reasons_not_employed', { type: 'manual', message: 'Select at least one reason' });
+      }
+    } else {
+      const employedFields: (keyof SurveyFormData)[] = [
+        'employment_status', 'present_occupation', 'major_line_of_business', 'place_of_work',
+        'first_job_after_college', 'how_long_first_job', 'how_found_first_job',
+        'how_long_to_land_first_job', 'job_level_first', 'job_level_current',
+        'initial_gross_monthly_earning', 'curriculum_relevant',
+      ];
+      if (data.employment_status === 'Self-employed') {
+        employedFields.push('self_employed_skills');
+      }
+      if (data.first_job_after_college === 'Yes') {
+        employedFields.push('reasons_for_staying');
+      } else if (data.first_job_after_college === 'No') {
+        employedFields.push('reasons_for_changing');
+      }
+      const empOk = await trigger(employedFields);
+      if (!empOk) step3Ok = false;
+      if (data.first_job_after_college === 'Yes' && (data.reasons_for_staying || []).length === 0) {
+        setError('reasons_for_staying', { type: 'manual', message: 'Select at least one reason' });
+        step3Ok = false;
+      }
+      if (data.first_job_after_college === 'No' && (data.reasons_for_changing || []).length === 0) {
+        setError('reasons_for_changing', { type: 'manual', message: 'Select at least one reason' });
+        step3Ok = false;
+      }
+    }
+    if (!step3Ok) invalidSteps.push(3);
+
+    // Step 4
+    let step4Ok = true;
+    if (data.curriculum_relevant === 'Yes' && data.useful_competencies.length === 0) {
+      setError('useful_competencies', { type: 'manual', message: 'Select at least one competency' });
+      step4Ok = false;
+    }
+    if (!step4Ok) invalidSteps.push(4);
+
+    return { valid: invalidSteps.length === 0, invalidSteps };
+  }, [trigger, setError, getValues]);
+
   const handleSubmitFinal = async () => {
     setIsSubmitting(true);
     try {
+      const { valid, invalidSteps } = await validateAllSteps();
+      if (!valid) {
+        toast({
+          title: 'Please complete all required fields',
+          description: `Missing information in: ${invalidSteps.map((i) => STEPS[i].label).join(', ')}`,
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const data = getValues();
       const rid = await saveDraft(data, responseId);
       if (!rid) throw new Error('No response ID');
@@ -2291,6 +2426,47 @@ export default function SurveyPage() {
           </p>
         </div>
 
+        {/* Consent Banner */}
+        {showConsent && !consentAgreed && (
+          <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-950/20 dark:border-amber-800/50">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-4">
+                <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                      Confidentiality &amp; Consent
+                    </h3>
+                    <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                      This survey is conducted for academic and institutional improvement purposes only. 
+                      All information you provide will be kept <strong className="text-foreground">strictly confidential</strong>. 
+                      Your responses will be used solely for analyzing graduate outcomes and enhancing academic programs. 
+                      No personally identifiable information will be shared with third parties without your explicit consent.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 pt-1">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        setConsentAgreed(true);
+                        setShowConsent(false);
+                      }}
+                      className="bg-primary hover:bg-emerald"
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-1.5" />
+                      I Understand &amp; Agree to Proceed
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Progress */}
         <div className="space-y-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -2307,9 +2483,7 @@ export default function SurveyPage() {
                 <button
                   key={idx}
                   type="button"
-                  onClick={() => {
-                    if (isDone || idx <= currentStep) setCurrentStep(idx);
-                  }}
+                  onClick={() => setCurrentStep(idx)}
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
                     isActive
@@ -2343,7 +2517,7 @@ export default function SurveyPage() {
             <Card>
               <CardContent className="p-6">
                 {currentStep === 0 && <Step1GeneralInfo />}
-                {currentStep === 1 && <Step2EducationalBackground />}
+                {currentStep === 1 && <Step2EducationalBackground graduationYears={graduationYears} />}
                 {currentStep === 2 && <Step3Trainings />}
                 {currentStep === 3 && <Step4Employment />}
                 {currentStep === 4 && <Step5SkillsFeedback />}

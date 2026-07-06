@@ -12,6 +12,9 @@ import {
 import { AppearanceForm } from './_components/appearance-form';
 import { AccountForm } from './_components/account-form';
 import { SecurityForm } from './_components/security-form';
+import { ChatbotForm } from './_components/chatbot-form';
+import { MobileAppForm } from './_components/mobile-app-form';
+import { GraduationYearsForm } from './_components/graduation-years-form';
 
 export default function SettingsPage() {
   return (
@@ -28,6 +31,9 @@ export default function SettingsPage() {
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="account">Account</TabsTrigger>
             <TabsTrigger value="security">Security</TabsTrigger>
+            <TabsTrigger value="chatbot">Chatbot</TabsTrigger>
+            <TabsTrigger value="mobile">Mobile App</TabsTrigger>
+            <TabsTrigger value="graduation">Graduation Years</TabsTrigger>
           </TabsList>
           <TabsContent value="appearance">
             <AppearanceForm />
@@ -37,6 +43,15 @@ export default function SettingsPage() {
           </TabsContent>
           <TabsContent value="security">
             <SecurityForm />
+          </TabsContent>
+          <TabsContent value="chatbot">
+            <ChatbotForm />
+          </TabsContent>
+          <TabsContent value="mobile">
+            <MobileAppForm />
+          </TabsContent>
+          <TabsContent value="graduation">
+            <GraduationYearsForm />
           </TabsContent>
         </Tabs>
       </div>

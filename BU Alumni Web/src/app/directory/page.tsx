@@ -29,6 +29,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Filter,
+  Calendar,
 } from 'lucide-react';
 import type { Profile } from '@/lib/types';
 
@@ -42,6 +43,7 @@ export default function DirectoryPage() {
   const [batchFilter, setBatchFilter] = useState<string>('all');
   const [degreeFilter, setDegreeFilter] = useState<string>('all');
   const [collegeFilter, setCollegeFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('all');
   const [page, setPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
   const [batchOptions, setBatchOptions] = useState<number[]>([]);
@@ -66,6 +68,30 @@ export default function DirectoryPage() {
     if (collegeFilter && collegeFilter !== 'all') {
       query = query.eq('college', collegeFilter);
     }
+    if (dateFilter && dateFilter !== 'all') {
+      const now = new Date();
+      let fromDate: Date;
+      switch (dateFilter) {
+        case '7d':
+          fromDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30d':
+          fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case '6m':
+          fromDate = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+          break;
+        case '1y':
+          fromDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+          break;
+        case 'this_year':
+          fromDate = new Date(now.getFullYear(), 0, 1);
+          break;
+        default:
+          fromDate = now;
+      }
+      query = query.gte('created_at', fromDate.toISOString());
+    }
 
     const from = page * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
@@ -81,7 +107,7 @@ export default function DirectoryPage() {
       setTotalCount(count || 0);
     }
     setLoading(false);
-  }, [supabase, searchTerm, batchFilter, degreeFilter, collegeFilter, page]);
+  }, [supabase, searchTerm, batchFilter, degreeFilter, collegeFilter, dateFilter, page]);
 
   useEffect(() => {
     fetchProfiles();
@@ -196,6 +222,26 @@ export default function DirectoryPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select
+              value={dateFilter}
+              onValueChange={(v) => {
+                setDateFilter(v);
+                setPage(0);
+              }}
+            >
+              <SelectTrigger className="w-[160px]">
+                <Calendar className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Date Joined" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="7d">Last 7 Days</SelectItem>
+                <SelectItem value="30d">Last 30 Days</SelectItem>
+                <SelectItem value="6m">Last 6 Months</SelectItem>
+                <SelectItem value="1y">Last Year</SelectItem>
+                <SelectItem value="this_year">This Year</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -281,7 +327,8 @@ export default function DirectoryPage() {
             {searchTerm ||
             batchFilter !== 'all' ||
             degreeFilter !== 'all' ||
-            collegeFilter !== 'all'
+            collegeFilter !== 'all' ||
+            dateFilter !== 'all'
               ? 'No alumni found matching your filters.'
               : 'No alumni profiles found.'}
           </div>

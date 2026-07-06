@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { verifyUser, getCorsHeaders } from '../_shared/auth.ts';
+import { verifyUser, getCorsHeaders, createSupabaseAdmin } from '../_shared/auth.ts';
 
 const SYSTEM_PROMPT = `You are BUddy, the AI assistant for Baliuag University's Alumni Portal.
 You help alumni navigate the platform, complete the CHED Graduate Tracer Survey,
@@ -15,24 +15,95 @@ Always respond in a friendly, professional, and encouraging tone.
 Keep responses concise (under 150 words unless asked for more detail).
 Do not make up information about alumni, employment rates, or university policies.`;
 
-const MODEL = Deno.env.get('KIMI_MODEL') || 'moonshot-v1-8k';
-const API_BASE = Deno.env.get('KIMI_API_BASE') || 'https://api.moonshot.cn/v1';
+type Provider = 'gemini' | 'moonshot' | 'openai';
 
-function getApiKey(): string | null {
-  return Deno.env.get('KIMI_API_KEY') || null;
+const PROVIDER_DEFAULTS: Record<
+  Provider,
+  { model: string; base: string; envKey: string }
+> = {
+  gemini: {
+    model: 'gemini-2.0-flash',
+    base: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    envKey: 'GEMINI_API_KEY',
+  },
+  moonshot: {
+    model: 'kimi-k2.5',
+    base: 'https://api.moonshot.ai/v1',
+    envKey: 'KIMI_API_KEY',
+  },
+  openai: {
+    model: 'gpt-4o-mini',
+    base: 'https://api.openai.com/v1',
+    envKey: 'OPENAI_API_KEY',
+  },
+};
+
+interface ChatbotConfig {
+  provider: Provider;
+  model: string;
+  apiBase: string;
+  apiKey: string | null;
+  systemPrompt: string;
+}
+
+async function getChatbotConfig(): Promise<ChatbotConfig> {
+  const provider: Provider = 'gemini';
+  const defaults = PROVIDER_DEFAULTS[provider];
+
+  let config: ChatbotConfig = {
+    provider,
+    model: defaults.model,
+    apiBase: defaults.base,
+    apiKey: Deno.env.get(defaults.envKey) || null,
+    systemPrompt: SYSTEM_PROMPT,
+  };
+
+  try {
+    const adminClient = createSupabaseAdmin();
+    const { data: settings } = await adminClient
+      .from('site_settings')
+      .select('chatbot_provider, chatbot_model, chatbot_api_base, chatbot_api_key, chatbot_system_prompt')
+      .eq('id', 1)
+      .single();
+
+    if (settings?.chatbot_provider && settings.chatbot_provider in PROVIDER_DEFAULTS) {
+      const selectedProvider = settings.chatbot_provider as Provider;
+      const selectedDefaults = PROVIDER_DEFAULTS[selectedProvider];
+      config.provider = selectedProvider;
+      config.model = selectedDefaults.model;
+      config.apiBase = selectedDefaults.base;
+      config.apiKey = Deno.env.get(selectedDefaults.envKey) || null;
+    }
+    if (settings?.chatbot_model?.trim()) {
+      config.model = settings.chatbot_model.trim();
+    }
+    if (settings?.chatbot_api_base?.trim()) {
+      config.apiBase = settings.chatbot_api_base.trim();
+    }
+    if (settings?.chatbot_api_key?.trim()) {
+      config.apiKey = settings.chatbot_api_key.trim();
+    }
+    if (settings?.chatbot_system_prompt?.trim()) {
+      config.systemPrompt = settings.chatbot_system_prompt.trim();
+    }
+  } catch {
+    // Fall back to defaults if settings read fails
+  }
+
+  return config;
 }
 
 async function chatCompletion(
   message: string,
-  conversationHistory: Array<{ role: string; content: string }>
+  conversationHistory: Array<{ role: string; content: string }>,
+  config: ChatbotConfig
 ) {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error('KIMI_API_KEY is not configured');
+  if (!config.apiKey) {
+    throw new Error(`API key not configured for ${config.provider}`);
   }
 
   const messages = [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: config.systemPrompt },
     ...conversationHistory.map((h) => ({
       role: h.role === 'assistant' ? 'assistant' : 'user',
       content: h.content,
@@ -40,14 +111,14 @@ async function chatCompletion(
     { role: 'user', content: message },
   ];
 
-  const res = await fetch(`${API_BASE}/chat/completions`, {
+  const res = await fetch(`${config.apiBase}/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${config.apiKey}`,
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: config.model,
       messages,
       temperature: 0.7,
       max_tokens: 512,
@@ -56,7 +127,7 @@ async function chatCompletion(
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Kimi API error ${res.status}: ${err}`);
+    throw new Error(`${config.provider} API error ${res.status}: ${err}`);
   }
 
   const data = await res.json();
@@ -94,7 +165,8 @@ serve(async (req) => {
       });
     }
 
-    const reply = await chatCompletion(message, conversationHistory);
+    const config = await getChatbotConfig();
+    const reply = await chatCompletion(message, conversationHistory, config);
 
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

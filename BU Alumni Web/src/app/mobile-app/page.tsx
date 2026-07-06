@@ -1,10 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/app-layout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
+import { createClient } from '@/lib/supabase/client';
 import {
   Smartphone,
   MessageSquare,
@@ -16,6 +19,10 @@ import {
   QrCode,
   ExternalLink,
 } from 'lucide-react';
+
+const DEFAULT_APK_URL = 'https://drive.google.com/file/d/1mezf1st4huU0uwVjQKPu2p7B9OTKnzeg/view?usp=sharing';
+const DEFAULT_VERSION = 'v1.1.0';
+const GITHUB_RELEASES_URL = 'https://github.com/fleurdelyxs-projects/bu-alumni-mobile/releases';
 
 const features = [
   {
@@ -61,7 +68,31 @@ const cardItem = {
 };
 
 export default function MobileAppPage() {
-  const apkUrl = 'https://drive.google.com/file/d/1mezf1st4huU0uwVjQKPu2p7B9OTKnzeg/view?usp=sharing';
+  const [apkUrl, setApkUrl] = useState(DEFAULT_APK_URL);
+  const [version, setVersion] = useState(DEFAULT_VERSION);
+  const [loading, setLoading] = useState(true);
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadSettings() {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('mobile_app_download_url, mobile_app_version')
+        .eq('id', 1)
+        .single();
+      if (!error && data) {
+        if (data.mobile_app_download_url?.trim()) {
+          setApkUrl(data.mobile_app_download_url.trim());
+        }
+        if (data.mobile_app_version?.trim()) {
+          setVersion(data.mobile_app_version.trim());
+        }
+      }
+      setLoading(false);
+    }
+    loadSettings();
+  }, [supabase]);
+
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(apkUrl)}`;
 
   return (
@@ -101,11 +132,15 @@ export default function MobileAppPage() {
                 {/* QR Code */}
                 <div className="shrink-0">
                   <div className="rounded-2xl bg-[hsl(var(--parchment))] p-4 shadow-inner ring-1 ring-[hsl(var(--fog))]">
-                    <img
-                      src={qrApiUrl}
-                      alt="Download QR Code"
-                      className="h-48 w-48 rounded-xl"
-                    />
+                    {loading ? (
+                      <Skeleton className="h-48 w-48 rounded-xl" />
+                    ) : (
+                      <img
+                        src={qrApiUrl}
+                        alt="Download QR Code"
+                        className="h-48 w-48 rounded-xl"
+                      />
+                    )}
                   </div>
                   <p className="text-center text-xs text-[hsl(var(--slate))] mt-3 flex items-center justify-center gap-1">
                     <QrCode className="h-3 w-3" />
@@ -119,7 +154,7 @@ export default function MobileAppPage() {
                     variant="secondary"
                     className="bg-[hsl(var(--jungle))]/10 text-[hsl(var(--jungle))] border-0 font-medium mb-4"
                   >
-                    Android APK — v1.1.0
+                    {loading ? <Skeleton className="h-4 w-24" /> : `Android APK — ${version}`}
                   </Badge>
                   <h2 className="text-2xl font-serif text-[hsl(var(--ink))] mb-3">
                     Download the App
@@ -132,6 +167,7 @@ export default function MobileAppPage() {
                     <Button
                       className="bg-[hsl(var(--forest))] hover:bg-[hsl(var(--jungle))] text-[hsl(var(--paper))] shadow-warm-lg transition-all duration-300 hover:scale-[1.02] rounded-xl px-6 h-11"
                       asChild
+                      disabled={loading}
                     >
                       <a href={apkUrl} target="_blank" rel="noopener noreferrer">
                         <Download className="mr-2 h-4 w-4" />
@@ -144,7 +180,7 @@ export default function MobileAppPage() {
                       asChild
                     >
                       <a
-                        href="https://github.com/fleurdelyxs-projects/bu-alumni-mobile/releases"
+                        href={GITHUB_RELEASES_URL}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

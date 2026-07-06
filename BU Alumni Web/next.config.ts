@@ -1,16 +1,5 @@
 import type { NextConfig } from 'next';
 
-const requiredEnv = [
-  'NEXT_PUBLIC_SUPABASE_URL',
-  'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-];
-
-requiredEnv.forEach((key) => {
-  if (!process.env[key]) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
-});
-
 const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: process.env.CI !== 'true',

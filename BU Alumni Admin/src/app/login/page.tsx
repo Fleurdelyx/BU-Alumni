@@ -28,7 +28,8 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [needsMFA, setNeedsMFA] = useState(false);
   const [mfaCode, setMfaCode] = useState('');
-  const [credentials, setCredentials] = useState<{ email: string; password: string } | null>(null);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaChallengeId, setMfaChallengeId] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -110,7 +111,16 @@ function LoginForm() {
       const totpFactor = factorsData?.totp?.find((f: any) => f.status === 'verified');
 
       if (totpFactor) {
-        setCredentials({ email: values.email, password: values.password });
+        const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+          factorId: totpFactor.id,
+        });
+        if (challengeError || !challengeData) {
+          setLoading(false);
+          setError('Could not start two-factor authentication. Please try again.');
+          return;
+        }
+        setMfaFactorId(totpFactor.id);
+        setMfaChallengeId(challengeData.id);
         setNeedsMFA(true);
         setLoading(false);
         setMessage('Enter the 6-digit code from your authenticator app.');
@@ -126,7 +136,7 @@ function LoginForm() {
   };
 
   const handleMFAVerify = async () => {
-    if (!credentials || mfaCode.length !== 6) {
+    if (!mfaFactorId || !mfaChallengeId || mfaCode.length !== 6) {
       setError('Enter a valid 6-digit code.');
       return;
     }
@@ -135,24 +145,15 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      // Use nonce to verify MFA in a single sign-in call
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password,
-        options: {
-          nonce: mfaCode,
-        },
+      const { data: verifyData, error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: mfaChallengeId,
+        code: mfaCode.replace(/\s/g, ''),
       });
 
-      if (signInError) {
+      if (verifyError || !verifyData?.user) {
         setLoading(false);
-        setError(signInError.message);
-        return;
-      }
-
-      if (!data.user) {
-        setLoading(false);
-        setError('Verification failed. Please try again.');
+        setError(verifyError?.message || 'Invalid authentication code. Please try again.');
         return;
       }
 
@@ -275,6 +276,12 @@ function LoginForm() {
                     placeholder="000000"
                     value={mfaCode}
                     onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && mfaCode.length === 6) {
+                        e.preventDefault();
+                        handleMFAVerify();
+                      }
+                    }}
                     className="text-center text-2xl tracking-[0.5em] font-mono"
                     autoFocus
                   />
@@ -285,7 +292,7 @@ function LoginForm() {
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Verify
                 </Button>
-                <Button variant="ghost" onClick={() => { setNeedsMFA(false); setMfaCode(''); setError(''); setMessage(''); }}>
+                <Button variant="ghost" onClick={() => { setNeedsMFA(false); setMfaCode(''); setMfaFactorId(null); setMfaChallengeId(null); setError(''); setMessage(''); }}>
                   Back to sign in
                 </Button>
               </CardFooter>
@@ -296,7 +303,7 @@ function LoginForm() {
         <p className="text-center text-sm text-slate mt-6">
           Need to set up 2FA?{' '}
           <a
-            href="https://alumni.baliuag.edu.ph/settings"
+            href={`${process.env.NEXT_PUBLIC_ALUMNI_APP_URL || 'https://bu-alumni-web.vercel.app'}/settings`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary font-medium hover:underline"
