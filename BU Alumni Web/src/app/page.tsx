@@ -23,16 +23,28 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { PrivacyPolicyPreview, TermsOfServicePreview } from '@/components/glance-preview';
 
 /* ─── Animated Counter ─── */
+const COUNTER_ANIMATED_KEY = 'bu_landing_counters_animated';
+
 function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState(() =>
+    typeof window !== 'undefined' && sessionStorage.getItem(COUNTER_ANIMATED_KEY) === '1' ? target : 0
+  );
   const ref = useRef<HTMLSpanElement>(null);
-  const [hasAnimated, setHasAnimated] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(
+    () => typeof window !== 'undefined' && sessionStorage.getItem(COUNTER_ANIMATED_KEY) === '1'
+  );
 
   useEffect(() => {
+    if (hasAnimated) return;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !hasAnimated) {
           setHasAnimated(true);
+          try {
+            sessionStorage.setItem(COUNTER_ANIMATED_KEY, '1');
+          } catch {
+            // ignore sessionStorage errors
+          }
           let start = 0;
           const duration = 2000;
           const increment = target / (duration / 16);
@@ -225,23 +237,25 @@ export default function LandingPage() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className="fixed top-0 left-0 right-0 z-50 glass border-b border-mist/30"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="h-10 w-10 rounded-xl bg-white border border-mist/40 flex items-center justify-center p-0.5 shadow-sm group-hover:shadow-md transition-shadow duration-300">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 min-h-14 h-auto py-2 sm:h-16 flex items-center justify-between gap-2">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white border border-mist/40 flex items-center justify-center p-0.5 shadow-sm group-hover:shadow-md transition-shadow duration-300 shrink-0">
               <img src="/logos/bu.png" alt="BU" className="h-full w-full object-contain" />
             </div>
-            <div>
-              <span className="font-display font-bold text-lg text-forest leading-tight">BU Alumni</span>
+            <div className="min-w-0">
+              <span className="font-display font-bold text-base sm:text-lg text-forest leading-tight">BU Alumni</span>
               <span className="hidden sm:inline text-[10px] text-primary/80 uppercase tracking-widest font-semibold ml-2">Tracer Study</span>
             </div>
           </Link>
-          <div className="flex items-center gap-3">
-            <ThemeToggle className="text-forest hover:bg-primary/10" />
-            <Link href="/login">
-              <Button variant="ghost" className="text-forest hover:text-primary hover:bg-primary/5">Sign In</Button>
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+            <ThemeToggle className="text-forest hover:bg-primary/10 h-8 w-8" />
+            <Link href="/login" className="hidden sm:inline-flex">
+              <Button variant="ghost" size="sm" className="text-forest hover:text-primary hover:bg-primary/5 text-xs px-2 py-1.5">
+                Sign In
+              </Button>
             </Link>
             <Link href="/signup">
-              <Button className="bg-primary hover:bg-emerald text-white shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300">
+              <Button size="sm" className="bg-primary hover:bg-emerald text-white shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 text-xs px-3 py-1.5">
                 Get Started
               </Button>
             </Link>
@@ -266,7 +280,7 @@ export default function LandingPage() {
           }}
         />
 
-        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 text-center">
+        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-16 text-center">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -309,21 +323,21 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-4"
+            className="mt-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-md sm:max-w-none mx-auto"
           >
-            <Link href="/signup">
+            <Link href="/signup" className="w-full sm:w-auto">
               <Button
                 size="lg"
-                className="gap-2 bg-primary hover:bg-emerald text-white shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 text-base px-8"
+                className="w-full sm:w-auto gap-2 bg-primary hover:bg-emerald text-white shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 text-base px-6 sm:px-8"
               >
                 Join the Community <ArrowRight className="h-5 w-5" />
               </Button>
             </Link>
-            <Link href="/login">
+            <Link href="/login" className="w-full sm:w-auto">
               <Button
                 size="lg"
                 variant="outline"
-                className="border-mist text-forest hover:bg-white hover:border-primary/30 hover:text-primary hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 text-base px-8"
+                className="w-full sm:w-auto border-mist text-forest hover:bg-white hover:border-primary/30 hover:text-primary hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 text-base px-6 sm:px-8"
               >
                 Sign In
               </Button>
@@ -335,7 +349,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.5 }}
-            className="mt-16 flex flex-wrap items-center justify-center gap-8 sm:gap-12"
+            className="mt-16 flex flex-wrap items-center justify-center gap-6 sm:gap-12"
           >
             {[
               { value: '10K+', label: 'Alumni Members' },
@@ -493,20 +507,20 @@ export default function LandingPage() {
               Join thousands of Baliuag University alumni who are already tracking their success,
               sharing opportunities, and giving back to the BU community.
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-              <Link href="/signup">
+            <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 w-full max-w-md sm:max-w-none mx-auto">
+              <Link href="/signup" className="w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="gap-2 bg-primary hover:bg-emerald text-white shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 text-base px-6 sm:px-8"
+                  className="w-full sm:w-auto gap-2 bg-primary hover:bg-emerald text-white shadow-xl shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 hover:scale-105 text-base px-6 sm:px-8"
                 >
                   Create Your Account <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/login">
+              <Link href="/login" className="w-full sm:w-auto">
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-mist text-forest hover:bg-white hover:border-primary/30 hover:text-primary hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 text-base px-6 sm:px-8"
+                  className="w-full sm:w-auto border-mist text-forest hover:bg-white hover:border-primary/30 hover:text-primary hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 text-base px-6 sm:px-8"
                 >
                   Already a Member?
                 </Button>

@@ -48,6 +48,7 @@ function FloatingOrb({ className, delay = 0 }: { className: string; delay?: numb
 }
 
 const SIGNUP_DRAFT_KEY = 'bu_alumni_signup_draft';
+const SIGNUP_PASSWORD_DRAFT_KEY = 'bu_alumni_signup_password_draft';
 
 const COLLEGES = [
   'College of Liberal Arts and General Education (CLAGE)',
@@ -130,7 +131,7 @@ export default function SignupPage() {
   const [hasReadPrivacy, setHasReadPrivacy] = useState(false);
   const [hasReadTerms, setHasReadTerms] = useState(false);
   const [hasDraft, setHasDraft] = useState(false);
-  const isInitialCollegeMount = useRef(true);
+  const previousCollegeRef = useRef('');
   const [siteSettings, setSiteSettings] = useState<{
     restrict_email_domain?: boolean;
     allowed_email_domains?: string[];
@@ -188,6 +189,17 @@ export default function SignupPage() {
         if (parsed.hasReadTerms) setHasReadTerms(true);
         setHasDraft(true);
       }
+
+      try {
+        const passwordDraft = sessionStorage.getItem(SIGNUP_PASSWORD_DRAFT_KEY);
+        if (passwordDraft) {
+          const pp = JSON.parse(passwordDraft);
+          if (pp.password) setValue('password', pp.password);
+          if (pp.confirmPassword) setValue('confirmPassword', pp.confirmPassword);
+        }
+      } catch {
+        // ignore sessionStorage errors
+      }
     } catch {
       // ignore parse errors
     }
@@ -212,24 +224,41 @@ export default function SignupPage() {
         hasReadTerms,
       };
       localStorage.setItem(SIGNUP_DRAFT_KEY, JSON.stringify(draft));
+
+      try {
+        sessionStorage.setItem(
+          SIGNUP_PASSWORD_DRAFT_KEY,
+          JSON.stringify({
+            password: value.password || '',
+            confirmPassword: value.confirmPassword || '',
+          })
+        );
+      } catch {
+        // ignore sessionStorage errors
+      }
+
       if (hasDraft) setHasDraft(true);
     });
     return () => subscription.unsubscribe();
   }, [watch, hasReadPrivacy, hasReadTerms, hasDraft]);
 
   useEffect(() => {
-    // Skip clearing degree on initial mount so draft-restored degree survives
-    if (isInitialCollegeMount.current) {
-      isInitialCollegeMount.current = false;
-      return;
-    }
-    if (selectedCollege) {
+    // Only clear the degree when the user actually changes from one college to another.
+    // This preserves a degree restored from the draft on initial load.
+    if (previousCollegeRef.current === selectedCollege) return;
+    if (previousCollegeRef.current && selectedCollege) {
       form.setValue('degree', '');
     }
+    previousCollegeRef.current = selectedCollege || '';
   }, [selectedCollege, form]);
 
   const clearDraft = () => {
     localStorage.removeItem(SIGNUP_DRAFT_KEY);
+    try {
+      sessionStorage.removeItem(SIGNUP_PASSWORD_DRAFT_KEY);
+    } catch {
+      // ignore
+    }
     setHasDraft(false);
   };
 
@@ -598,7 +627,7 @@ export default function SignupPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="text-foreground/80">College / School</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="bg-input border-input focus:border-primary focus:ring-primary/20">
                             <SelectValue placeholder="Select college" />

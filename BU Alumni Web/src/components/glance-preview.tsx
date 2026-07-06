@@ -72,11 +72,16 @@ function DocumentPreviewShell({
 
   useEffect(() => {
     if (!open) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleClose();
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
   }, [open, handleClose]);
 
   return (
@@ -127,7 +132,7 @@ function DocumentPreviewShell({
                     <p className="text-xs text-muted-foreground truncate">{url}</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <Button
                     variant="ghost"
                     size="sm"
@@ -135,10 +140,16 @@ function DocumentPreviewShell({
                     onClick={() => window.open(url, '_blank', 'noopener,noreferrer')}
                   >
                     <ExternalLink className="h-3.5 w-3.5" />
-                    Open
+                    <span className="hidden sm:inline">Open</span>
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
-                    <X className="h-4 w-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                    onClick={handleClose}
+                    aria-label="Close"
+                  >
+                    <X className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
